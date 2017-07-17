@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Flashlight</string>
+    <string name="canvas">Canvas</string>
+    <string name="opengl_es">OpenGL ES</string>
+    <string name="title_permissions">Permissions</string>
+    <string name="btn_next">Next</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="toast_permissions_not_granted">Permissions not granted.</string>
+    <string name="message_permissions"><![CDATA[To allow audio visualization view to process audio stream app needs an access to your <b>Microphone</b>.]]></string>
+    <string name="start_recognition">Start Recognition</string>
+    <string name="stop_recognition">Stop Recognition</string>
+    <string name="start_recording">Start Recording</string>
+    <string name="stop_recording">Stop Recording</string>
+
+    <!-- AdMob ad unit IDs -->
+    <string name="banner_home_footer">ca-app-pub-7875491047514906/7124326070</string>
+    <string name="interstitial_full_screen">ca-app-pub-7875491047514906/8601059277</string>
+</resources>
