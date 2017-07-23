@@ -24,12 +24,17 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.os.Message;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.jquery404.flashlight.R;
+import com.jquery404.flashlight.manager.SongsManager;
+import com.jquery404.flashlight.manager.Utilities;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -47,6 +52,8 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
     @BindView(R.id.bit_a)
     View bitA;
+    @BindView(R.id.songTitleLabel)
+    TextView tvSongTitle;
 
 
     private MediaPlayer mMediaPlayer;
@@ -58,6 +65,10 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     Camera.Parameters params;
     SurfaceHolder mHolder;
     SurfaceView preview;
+    private SongsManager songManager;
+    private Utilities utils;
+    private ArrayList<HashMap<String, String>> songsList = new ArrayList<HashMap<String, String>>();
+    private int currentSongIndex = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +81,12 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
         getCamera();
         initAudio();
+
+        songManager = new SongsManager();
+        utils = new Utilities();
+
+        songsList = songManager.getPlayList();
+
     }
 
 
@@ -85,6 +102,25 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             Toast.makeText(this, "Have", Toast.LENGTH_SHORT).show();
         }
 
+    }
+
+    public void  playSong(int songIndex){
+        // Play song
+        try {
+            mMediaPlayer.reset();
+            mMediaPlayer.setDataSource(songsList.get(songIndex).get("songPath"));
+            mMediaPlayer.prepare();
+            mMediaPlayer.start();
+            // Displaying Song title
+            String songTitle = songsList.get(songIndex).get("songTitle");
+            tvSongTitle.setText(songTitle);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
@@ -221,13 +257,21 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
     @OnClick(R.id.btn_play)
     public void onTogglePlay() {
-        if (mMediaPlayer.isPlaying()) {
-            mMediaPlayer.pause();
-        } else {
-            mMediaPlayer.start();
-        }
+        Intent i = new Intent(getApplicationContext(), PlayListActivity.class);
+        startActivityForResult(i, 100);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode,
+                                    int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode == 100){
+            currentSongIndex = data.getExtras().getInt("songIndex");
+            // play selected song
+            playSong(currentSongIndex);
+        }
+
+    }
 
     /*
     * Turning On flash
