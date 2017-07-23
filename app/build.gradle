@@ -48,7 +48,6 @@ dependencies {
 
     // permission
     compile 'pub.devrel:easypermissions:0.4.2'
-    compile 'com.pddstudio:easyflashlight:0.1.0'
 
     // admob
     compile 'com.google.android.gms:play-services-ads:11.0.2'
