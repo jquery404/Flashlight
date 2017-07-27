@@ -12,6 +12,11 @@
     <string name="start_recording">Start Recording</string>
     <string name="stop_recording">Stop Recording</string>
 
+    <!-- Activity titles -->
+    <string name="activity_main">Flashlight</string>
+    <string name="activity_playlist">Playlist</string>
+    <string name="activity_about">About</string>
+
     <!-- AdMob ad unit IDs -->
     <string name="banner_home_footer">ca-app-pub-7875491047514906/7124326070</string>
     <string name="interstitial_full_screen">ca-app-pub-7875491047514906/8601059277</string>

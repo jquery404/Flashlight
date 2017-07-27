@@ -1,72 +1,101 @@
 package com.jquery404.flashlight.main;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import android.app.ListActivity;
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.ListAdapter;
-import android.widget.ListView;
-import android.widget.SimpleAdapter;
+import android.os.Environment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 
 import com.jquery404.flashlight.R;
-import com.jquery404.flashlight.manager.SongsManager;
+import com.jquery404.flashlight.adapter.PlaylistAdapter;
+import com.jquery404.flashlight.adapter.Song;
+
+import java.io.File;
+import java.util.ArrayList;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * Created by vision on 7/24/2017.
  */
 
-public class PlayListActivity extends ListActivity{
+public class PlayListActivity extends Activity {
 
-    // Songs list
-    public ArrayList<HashMap<String, String>> songsList = new ArrayList<HashMap<String, String>>();
+    @BindView(R.id.recycler_playlist)
+    RecyclerView recycler_playlist;
 
-    @Override
+    File sdCardRoot = Environment.getExternalStorageDirectory();
+    private ArrayList<Song> songsList = new ArrayList<>();
+
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.playlist_item);
+        setContentView(R.layout.activity_playlist);
 
-        ArrayList<HashMap<String, String>> songsListData = new ArrayList<HashMap<String, String>>();
-
-        SongsManager plm = new SongsManager();
-        this.songsList = plm.getPlayList();
-
-        // looping through playlist
-        for (int i = 0; i < songsList.size(); i++) {
-            // creating new HashMap
-            HashMap<String, String> song = songsList.get(i);
-
-            // adding HashList to ArrayList
-            songsListData.add(song);
+        ButterKnife.bind(this);
+        songsList = getPlayList();
+        if (songsList != null) {
+            recycler_playlist.setLayoutManager(new LinearLayoutManager(this));
+            RecyclerView.Adapter adapter = new PlaylistAdapter(this, songsList);
+            recycler_playlist.setAdapter(adapter);
+            recycler_playlist.setNestedScrollingEnabled(false);
         }
 
-        // Adding menuItems to ListView
-        ListAdapter adapter = new SimpleAdapter(this, songsListData, R.layout.playlist_item, new String[] { "songTitle" }, new int[] {R.id.songTitleLabel} );
-
-        setListAdapter(adapter);
-
-        ListView lv = getListView();
-        lv.setOnItemClickListener(new OnItemClickListener() {
-
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view,
-                                    int position, long id) {
-                // getting listitem index
-                int songIndex = position;
-
-                // Starting new intent
-                Intent in = new Intent(getApplicationContext(),
-                        MainActivity.class);
-                // Sending songIndex to PlayerActivity
-                in.putExtra("songIndex", songIndex);
-                setResult(100, in);
-                // Closing PlayListView
-                finish();
-            }
-        });
     }
+
+    public static void start(Context context) {
+        Intent intent = new Intent(context, PlayListActivity.class);
+        intent.putExtra("flag", context.getClass().getSimpleName());
+        context.startActivity(intent);
+    }
+
+    public ArrayList<Song> getPlayList() {
+        File home = Environment.getExternalStorageDirectory();
+        File[] listFiles = home.listFiles();
+        if (listFiles != null && listFiles.length > 0) {
+            for (File file : listFiles) {
+                if (file.isDirectory()) {
+                    scanDirectory(file);
+                } else {
+                    addSongToList(file);
+                }
+            }
+        }
+
+        return songsList;
+    }
+
+    private void scanDirectory(File directory) {
+        if (directory != null) {
+            File[] listFiles = directory.listFiles();
+            if (listFiles != null && listFiles.length > 0) {
+                for (File file : listFiles) {
+                    if (file.isDirectory()) {
+                        scanDirectory(file);
+                    } else {
+                        addSongToList(file);
+                    }
+                }
+            }
+        }
+    }
+
+    private void addSongToList(File song) {
+
+        if (song.getName().endsWith(".mp3") ||
+                song.getName().endsWith(".MP3")) {
+            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
+            mmr.setDataSource(song.getPath());
+            String bitrate = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
+
+
+            Song mSong = new Song(song.getName().substring(0, (song.getName().length() - 4)), song.getPath());
+
+            songsList.add(mSong);
+        }
+    }
+
 }

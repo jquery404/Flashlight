@@ -1,46 +1,45 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:ads="http://schemas.android.com/apk/res-auto"
+<RelativeLayout
     android:id="@+id/root"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/main_bg"
     android:orientation="vertical">
-
-
-    <com.jquery404.flashlight.main.VisualizerView
-        android:id="@+id/myvisualizerview"
-        android:layout_width="match_parent"
-        android:layout_height="100dp" />
 
 
     <RelativeLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/myvisualizerview">
+        android:layout_height="wrap_content">
+
 
         <View
             android:id="@+id/bit_a"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/bit0"
-            android:padding="5dp" />
+            android:padding="5dp"/>
+
+        <com.jquery404.flashlight.main.VisualizerView
+            android:id="@+id/myvisualizerview"
+            android:layout_width="match_parent"
+            android:layout_height="400dp"/>
 
         <ImageView
             android:id="@+id/btn_play"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:src="@drawable/logo"
+            android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
-            android:layout_centerHorizontal="true" />
+            android:src="@drawable/logo"/>
 
 
         <TextView
             android:id="@+id/songTitleLabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/btn_play"
             android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true" />
+            android:layout_alignParentStart="true"
+            android:layout_below="@+id/btn_play"/>
 
     </RelativeLayout>
 
@@ -48,7 +47,7 @@
         android:id="@+id/PREVIEW"
         android:layout_width="1dip"
         android:layout_height="1dip"
-        android:background="#000" />
+        android:background="#000"/>
 
 
     <com.google.android.gms.ads.AdView
@@ -60,6 +59,6 @@
         android:layout_alignParentStart="true"
         android:background="#000000"
         ads:adSize="SMART_BANNER"
-        ads:adUnitId="@string/banner_home_footer" />
+        ads:adUnitId="@string/banner_home_footer"/>
 </RelativeLayout>
 

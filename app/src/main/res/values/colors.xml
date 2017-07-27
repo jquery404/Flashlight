@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#3F51B5</color>
-    <color name="colorPrimaryDark">#303F9F</color>
-    <color name="colorAccent">#FF4081</color>
+    <color name="colorPrimary">#2e2e2e</color>
+    <color name="colorPrimaryDark">#121212</color>
+    <color name="colorSecondary">#232323</color>
+    <color name="colorSecondaryDark">#282828</color>
+    <color name="colorTopHalfCircle">#FC5704</color>
+    <color name="colorBottomHalfCircle">#000000</color>
+
+
+    <color name="colorAccent">#282828</color>
+
     <color name="colorLogo">#fcc304</color>
 
     <color name="bit0">#fcc304</color>
@@ -15,5 +22,21 @@
     <color name="bit5">#0415fc</color>
 
     <color name="bit6">#be04fc</color>
-    <color name="bit7">#fc0421</color>
+    <color name="bit7">#000000</color>
+
+
+    <color name="waveform_selected">#33b5e5</color>
+    <color name="waveform_unselected">#195a72</color>
+    <color name="waveform_unselected_bkgnd_overlay">#0a242d</color>
+    <color name="selection_border">#ffffff</color>
+    <color name="playback_indicator">#ffff66</color>
+    <color name="grid_line">#66ffffff</color>
+    <color name="timecode">#ddffffdd</color>
+    <color name="timecode_shadow">#aa000000</color>
+
+    <color name="type_bkgnd_alarm">#88880000</color>
+    <color name="type_bkgnd_ringtone">#88008888</color>
+    <color name="type_bkgnd_notification">#88666600</color>
+    <color name="type_bkgnd_music">#88000000</color>
+    <color name="type_bkgnd_unsupported">#88cccccc</color>
 </resources>

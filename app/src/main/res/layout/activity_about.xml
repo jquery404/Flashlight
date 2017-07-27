@@ -38,19 +38,6 @@
         </RelativeLayout>
     </LinearLayout>
 
-    <ScrollView
-        android:id="@+id/creditScroll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
 
-        <LinearLayout
-            android:id="@+id/llPlayersName"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="vertical">
-
-        </LinearLayout>
-    </ScrollView>
 
 </LinearLayout>
