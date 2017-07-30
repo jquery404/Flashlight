@@ -5,15 +5,16 @@ package com.jquery404.flashlight.adapter;
  */
 
 public class Song {
-    private String name, path;
+    private String name, path, bitrate;
 
     public Song() {
 
     }
 
-    public Song(String name, String path) {
+    public Song(String name, String path, String bitrate) {
         this.name = name;
         this.path = path;
+        this.bitrate = bitrate;
     }
 
     public String getName() {
@@ -30,5 +31,13 @@ public class Song {
 
     public void setPath(String path) {
         this.path = path;
+    }
+
+    public String getBitrate() {
+        return bitrate;
+    }
+
+    public void setBitrate(String bitrate) {
+        this.bitrate = bitrate;
     }
 }

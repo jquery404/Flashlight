@@ -8,6 +8,8 @@ import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
 
+import com.jquery404.flashlight.helper.Utils;
+
 /**
  * Created by Faisal on 7/2/17.
  */
@@ -22,6 +24,8 @@ public class VisualizerView extends View {
     private float amplitude = 0;
     int mDivisions = 4;
     boolean mTop = false;
+    private float colorCounter = 0;
+
 
     public VisualizerView(Context context) {
         super(context);
@@ -77,7 +81,6 @@ public class VisualizerView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        cycleColor();
 
         if (mBytes == null)
             return;
@@ -93,6 +96,10 @@ public class VisualizerView extends View {
             mPoints[i * 4 + 2] = mRect.width() * (i + 1) / (mBytes.length - 1);
             mPoints[i * 4 + 3] = mRect.height() / 2 + ((byte) (mBytes[i + 1] + 128)) * (mRect.height() / 2) / 128;
         }*/
+
+        mForePaint.setColor(Utils.cycleColor(colorCounter));
+        colorCounter += 0.03;
+
 
         // Bar graph
         for (int i = 0; i < mBytes.length / mDivisions; i++) {
@@ -143,14 +150,5 @@ public class VisualizerView extends View {
         canvas.drawLines(mPoints, mForePaint);
     }
 
-    private float colorCounter = 0;
-
-    private void cycleColor() {
-        int r = (int) Math.floor(128 * (Math.sin(colorCounter) + 3));
-        int g = (int) Math.floor(128 * (Math.sin(colorCounter + 1) + 1));
-        int b = (int) Math.floor(128 * (Math.sin(colorCounter + 7) + 1));
-        mForePaint.setColor(Color.argb(128, r, g, b));
-        colorCounter += 0.03;
-    }
 
 }

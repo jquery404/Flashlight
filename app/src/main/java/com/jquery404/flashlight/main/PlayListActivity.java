@@ -1,8 +1,6 @@
 package com.jquery404.flashlight.main;
 
 import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
 import android.media.MediaMetadataRetriever;
 import android.os.Bundle;
 import android.os.Environment;
@@ -46,11 +44,6 @@ public class PlayListActivity extends Activity {
 
     }
 
-    public static void start(Context context) {
-        Intent intent = new Intent(context, PlayListActivity.class);
-        intent.putExtra("flag", context.getClass().getSimpleName());
-        context.startActivity(intent);
-    }
 
     public ArrayList<Song> getPlayList() {
         File home = Environment.getExternalStorageDirectory();
@@ -85,14 +78,15 @@ public class PlayListActivity extends Activity {
 
     private void addSongToList(File song) {
 
-        if (song.getName().endsWith(".mp3") ||
+        if (song.getName().endsWith(".ogg") ||
+                song.getName().endsWith(".mp3") ||
                 song.getName().endsWith(".MP3")) {
             MediaMetadataRetriever mmr = new MediaMetadataRetriever();
             mmr.setDataSource(song.getPath());
+
             String bitrate = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
-
-
-            Song mSong = new Song(song.getName().substring(0, (song.getName().length() - 4)), song.getPath());
+            Song mSong = new Song(song.getName().substring(0, (song.getName().length() - 4)),
+                    song.getPath(), ""+(Integer.parseInt(bitrate))/1000);
 
             songsList.add(mSong);
         }

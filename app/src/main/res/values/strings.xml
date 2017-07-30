@@ -12,6 +12,11 @@
     <string name="start_recording">Start Recording</string>
     <string name="stop_recording">Stop Recording</string>
 
+    <!-- Playlist activity -->
+    <string name="playlist_title">Playlist</string>
+    <string name="default_bpm">000</string>
+    <string name="bpm_title">KBPS</string>
+
     <!-- Activity titles -->
     <string name="activity_main">Flashlight</string>
     <string name="activity_playlist">Playlist</string>

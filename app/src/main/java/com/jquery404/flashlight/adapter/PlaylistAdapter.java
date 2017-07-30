@@ -70,6 +70,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
             Song song = songs.get(getAdapterPosition());
             Intent returnIntent = new Intent();
             returnIntent.putExtra("songPath", song.getPath());
+            returnIntent.putExtra("songBPM", song.getBitrate());
             ((Activity) context).setResult(Activity.RESULT_OK, returnIntent);
             ((Activity) context).finish();
         }

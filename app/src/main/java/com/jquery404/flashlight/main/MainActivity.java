@@ -8,15 +8,19 @@ import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
+import android.widget.TextView;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.jquery404.flashlight.R;
+import com.jquery404.flashlight.adapter.Song;
+import com.jquery404.flashlight.helper.Utils;
 
 import java.io.IOException;
 
@@ -40,21 +44,32 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
     @BindView(R.id.myvisualizerview)
     VisualizerView visualizerView;
+
+    @BindView(R.id.bpm)
+    TextView tvBPM;
+
     @BindView(R.id.background_beat)
     View backgroundBeat;
     @BindView(R.id.soundplate)
     View soundPlate;
     @BindView(R.id.circleview)
     View circleView;
+    @BindView(R.id.circleview_wrapper)
+    View circleViewWrapper;
+
     @BindView(R.id.btn_browser)
     ImageButton btnBrowser;
+
     @BindView(R.id.adView)
     AdView adView;
 
     private static final int REQUEST_PATH = 1;
     private MediaPlayer mMediaPlayer;
     private Visualizer mVisualizer;
+    Animation shakeAnimation, rotateAnimation;
     public float[] intensity = new float[4];
+    public float colorCounter = 0;
+    private boolean isSongSelected, isSongPlaying;
 
 
     /*
@@ -75,8 +90,8 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         ButterKnife.bind(this);
 
         initView();
-        //initAudio();
-        initEmu();
+        initAudio();
+        //initEmu();
 
         /*checkFlash();
         isFlashOn = false;
@@ -98,18 +113,26 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         mMediaPlayer.setOnCompletionListener(this);
         setupVisualizer();
         mMediaPlayer.start();
+        animRotate();
     }
 
     private void initAudio() {
+        circleViewWrapper.clearAnimation();
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setOnCompletionListener(this);
     }
 
-    public void shakeBox() {
-        Animation shakeAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.anim_shake);
+    public void animShakeBox() {
+        shakeAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.anim_shake);
         soundPlate.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         soundPlate.startAnimation(shakeAnimation);
+    }
+
+    public void animRotate() {
+        rotateAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.anim_rotate);
+        circleViewWrapper.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        circleViewWrapper.startAnimation(rotateAnimation);
     }
 
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
@@ -144,21 +167,27 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
         if (requestCode == REQUEST_PATH) {
             if (resultCode == Activity.RESULT_OK) {
-                String path = data.getStringExtra("songPath");
-                playSong(path);
+                Song song = new Song();
+                song.setPath(data.getStringExtra("songPath"));
+                song.setBitrate(data.getStringExtra("songBPM"));
+                playSong(song);
+                isSongSelected = true;
+            } else {
+                isSongSelected = false;
             }
         }
-
     }
 
-    public void playSong(String path) {
+    public void playSong(Song song) {
         try {
+            tvBPM.setText(song.getBitrate());
             mMediaPlayer.reset();
-            mMediaPlayer.setDataSource(path);
+            mMediaPlayer.setDataSource(song.getPath());
             mMediaPlayer.prepare();
             setupVisualizer();
-            mMediaPlayer.setOnCompletionListener((m) -> mVisualizer.setEnabled(false));
             mMediaPlayer.start();
+            animRotate();
+            isSongPlaying = true;
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (IllegalStateException e) {
@@ -168,12 +197,24 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         }
     }
 
+    private void resetanim() {
+        circleViewWrapper.clearAnimation();
+        soundPlate.clearAnimation();
+    }
+
+
     @Override
     protected void onPause() {
         super.onPause();
 
+        Log.e("c", "Pause");
         // on pause turn off the flash
         //turnOffFlash();
+
+        resetanim();
+
+        if (mVisualizer != null)
+            mVisualizer.setEnabled(false);
 
         if (isFinishing() && mMediaPlayer != null) {
             mVisualizer.release();
@@ -187,11 +228,19 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     @Override
     protected void onResume() {
         super.onResume();
+        Log.e("c", "Resume");
+        if (isSongPlaying && !isSongSelected && mVisualizer != null) {
+            mVisualizer.setEnabled(true);
+            animRotate();
+        }
+
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        Log.e("c", "Stop");
+
         // on stop release the camera
         /*if (camera != null) {
             camera.release();
@@ -215,8 +264,12 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
     @Override
     public void onCompletion(MediaPlayer mp) {
+        isSongPlaying = false;
+        tvBPM.setText(R.string.default_bpm);
         mVisualizer.setEnabled(false);
+        resetanim();
     }
+
 
     @Override
     public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
@@ -231,11 +284,11 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             if (intensity[3] < 0.5f) {
                 backgroundBeat.setBackgroundColor(ContextCompat.getColor(
                         getApplicationContext(), R.color.bit7));
+                animShakeBox();
                 //turnOnFlash();
-                shakeBox();
             } else {
-                backgroundBeat.setBackgroundColor(ContextCompat.getColor(
-                        getApplicationContext(), R.color.bit1));
+                backgroundBeat.setBackgroundColor(Utils.getColorId(getApplicationContext()));
+                colorCounter += 0.03f;
                 //turnOffFlash();
             }
         }

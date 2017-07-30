@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimary"
+    android:keepScreenOn="true"
     android:orientation="vertical">
 
     <RelativeLayout
@@ -37,12 +38,41 @@
             android:layout_margin="30dp"
             android:background="@drawable/soundplate"/>
 
-        <com.jquery404.flashlight.custom.CircleView
-            android:id="@+id/circleview"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+
+        <RelativeLayout
+            android:id="@+id/circleview_wrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"/>
+            android:layout_centerVertical="true">
+
+            <com.jquery404.flashlight.custom.CircleView
+                android:id="@+id/circleview"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"/>
+
+            <TextView
+                android:id="@+id/bpm"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="5dp"
+                android:gravity="center|center_vertical"
+                android:text="@string/default_bpm"
+                android:textColor="@color/colorTopHalfCircle"
+                android:textSize="24sp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="40dp"
+                android:gravity="center|center_vertical"
+                android:text="@string/bpm_title"
+                android:textColor="@color/colorBottomHalfCircle"
+                android:textSize="12sp"/>
+
+        </RelativeLayout>
     </RelativeLayout>
 
 
