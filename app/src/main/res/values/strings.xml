@@ -13,7 +13,7 @@
     <string name="stop_recording">Stop Recording</string>
 
     <!-- Playlist activity -->
-    <string name="playlist_title">Playlist</string>
+    <string name="playlist_title">Playlists</string>
     <string name="default_bpm">000</string>
     <string name="bpm_title">KBPS</string>
 

@@ -1,23 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:orientation="vertical"
-    android:paddingLeft="24dp"
-    android:paddingRight="24dp">
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/popularDirTitle"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/playlist_title"/>
+        android:layout_height="60dp"
+        android:background="@color/colorPlayCardHeader"
+        android:orientation="horizontal"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="center|center_vertical"
+            android:scaleType="fitCenter"
+            android:src="@android:drawable/btn_plus" />
+
+        <TextView
+            android:id="@+id/popularDirTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="20dp"
+            android:paddingEnd="20dp"
+            android:paddingLeft="2dp"
+            android:paddingRight="20dp"
+            android:paddingStart="2dp"
+            android:paddingTop="20dp"
+            android:text="@string/playlist_title"
+            android:textColor="@color/colorPlayCardText" />
+
+    </LinearLayout>
+
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recycler_playlist"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+        android:background="@color/colorPlayCard"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
 </LinearLayout>

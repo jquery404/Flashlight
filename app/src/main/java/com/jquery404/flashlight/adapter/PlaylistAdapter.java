@@ -41,6 +41,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
     public void onBindViewHolder(PlaylistHolder holder, int i) {
         Song song = songs.get(i);
         holder.songTitle.setText(song.getName());
+        holder.songDuration.setText(song.getDuration());
     }
 
     @Override
@@ -53,6 +54,8 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
 
         @BindView(R.id.song_title)
         TextView songTitle;
+        @BindView(R.id.song_duration)
+        TextView songDuration;
 
         ArrayList<Song> songs = new ArrayList<>();
         Context context;
@@ -71,6 +74,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
             Intent returnIntent = new Intent();
             returnIntent.putExtra("songPath", song.getPath());
             returnIntent.putExtra("songBPM", song.getBitrate());
+            returnIntent.putExtra("songDuration", song.getDuration());
             ((Activity) context).setResult(Activity.RESULT_OK, returnIntent);
             ((Activity) context).finish();
         }

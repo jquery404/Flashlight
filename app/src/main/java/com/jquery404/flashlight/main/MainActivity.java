@@ -48,6 +48,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     @BindView(R.id.bpm)
     TextView tvBPM;
 
+
     @BindView(R.id.background_beat)
     View backgroundBeat;
     @BindView(R.id.soundplate)

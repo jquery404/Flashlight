@@ -77,6 +77,7 @@ public class PlayListActivity extends Activity {
     }
 
     private void addSongToList(File song) {
+        String out = "";
 
         if (song.getName().endsWith(".ogg") ||
                 song.getName().endsWith(".mp3") ||
@@ -85,8 +86,17 @@ public class PlayListActivity extends Activity {
             mmr.setDataSource(song.getPath());
 
             String bitrate = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
+            String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            long dur = Long.parseLong(duration);
+            String seconds = String.valueOf((dur % 60000) / 1000);
+            String minutes = String.valueOf(dur / 60000);
+            if (seconds.length() == 1) {
+                out = ("0" + minutes + ":0" + seconds);
+            } else {
+                out = ("0" + minutes + ":" + seconds);
+            }
             Song mSong = new Song(song.getName().substring(0, (song.getName().length() - 4)),
-                    song.getPath(), ""+(Integer.parseInt(bitrate))/1000);
+                    song.getPath(), "" + (Integer.parseInt(bitrate)) / 1000, out);
 
             songsList.add(mSong);
         }
