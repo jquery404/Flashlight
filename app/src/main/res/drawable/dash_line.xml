@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- shadows -->
+    <item>
+        <shape>
+            <solid android:color="@android:color/transparent"/>
+            <corners android:radius="4dp"/>
+        </shape>
+    </item>
+
+    <!-- bevel -->
+    <item
+        android:bottom="1dp"
+        android:top="1dp">
+        <shape>
+            <solid android:color="@color/colorPlayCardHeader"/>
+        </shape>
+    </item>
+
+
+    <!-- background -->
+    <item
+        android:bottom="2dp"
+        android:top="1dp">
+        <shape>
+            <solid android:color="@color/colorPlayCard"/>
+        </shape>
+    </item>
+
+
+</layer-list>

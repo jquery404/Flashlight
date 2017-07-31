@@ -135,6 +135,31 @@ public class VisualizerView extends View {
         }
 
 
+
+
+        /* ------- */
+        if (mBytes == null) {
+            return;
+        }
+
+        if (mPoints == null || mPoints.length < mBytes.length * 4) {
+            mPoints = new float[mBytes.length * 4];
+        }
+
+        mRect.set(0, 0, getWidth(), getHeight());
+
+        for (int i = 0; i < mBytes.length - 1; i++) {
+            mPoints[i * 4] = mRect.width() * i / (mBytes.length - 1);
+            mPoints[i * 4 + 1] = mRect.height() / 2
+                    + ((byte) (mBytes[i] + 128)) * (mRect.height() / 2) / 128;
+            mPoints[i * 4 + 2] = mRect.width() * (i + 1) / (mBytes.length - 1);
+            mPoints[i * 4 + 3] = mRect.height() / 2
+                    + ((byte) (mBytes[i + 1] + 128)) * (mRect.height() / 2) / 128;
+        }
+
+        canvas.drawLines(mPoints, mForePaint);
+
+
         // bar
         /*for (int i = 0; i < mBytes.length / 2; i++) {
             mPoints[i * 4] = i * 8;
@@ -147,7 +172,7 @@ public class VisualizerView extends View {
             mPoints[i * 4 + 3] = (float) (dbValue * 7);
         }*/
 
-        canvas.drawLines(mPoints, mForePaint);
+//        canvas.drawLines(mPoints, mForePaint);
     }
 
 

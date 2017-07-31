@@ -7,13 +7,14 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageButton;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.google.android.gms.ads.AdRequest;
@@ -21,6 +22,7 @@ import com.google.android.gms.ads.AdView;
 import com.jquery404.flashlight.R;
 import com.jquery404.flashlight.adapter.Song;
 import com.jquery404.flashlight.helper.Utils;
+import com.jquery404.flashlight.manager.Utilities;
 
 import java.io.IOException;
 
@@ -33,7 +35,7 @@ import butterknife.OnClick;
  */
 
 public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Callback,
-        MediaPlayer.OnCompletionListener, Visualizer.OnDataCaptureListener {
+        MediaPlayer.OnCompletionListener, Visualizer.OnDataCaptureListener, SeekBar.OnSeekBarChangeListener {
 
     /*
 
@@ -48,6 +50,8 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     @BindView(R.id.bpm)
     TextView tvBPM;
 
+    @BindView(R.id.seek_bar)
+    SeekBar progressbar;
 
     @BindView(R.id.background_beat)
     View backgroundBeat;
@@ -65,17 +69,17 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     AdView adView;
 
     private static final int REQUEST_PATH = 1;
+    private Animation shakeAnimation, rotateAnimation;
     private MediaPlayer mMediaPlayer;
     private Visualizer mVisualizer;
-    Animation shakeAnimation, rotateAnimation;
     public float[] intensity = new float[4];
     public float colorCounter = 0;
     private boolean isSongSelected, isSongPlaying;
+    private Handler mHandler = new Handler();
+    private Utilities utils;
 
 
     /*
-
-
     private Camera camera;
     private boolean isFlashOn;
     private boolean hasFlash;
@@ -112,16 +116,23 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
         mMediaPlayer = MediaPlayer.create(this, R.raw.attention);
         mMediaPlayer.setOnCompletionListener(this);
+        progressbar.setOnSeekBarChangeListener(this);
+        progressbar.setMax(mMediaPlayer.getDuration());
+
         setupVisualizer();
         mMediaPlayer.start();
+
         animRotate();
     }
 
     private void initAudio() {
         circleViewWrapper.clearAnimation();
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        progressbar.setOnSeekBarChangeListener(this);
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setOnCompletionListener(this);
+        utils = new Utilities();
+
     }
 
     public void animShakeBox() {
@@ -161,8 +172,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     }
 
     @Override
-    protected void onActivityResult(int requestCode,
-                                    int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
 
@@ -181,14 +191,21 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
     public void playSong(Song song) {
         try {
-            tvBPM.setText(song.getBitrate());
             mMediaPlayer.reset();
             mMediaPlayer.setDataSource(song.getPath());
             mMediaPlayer.prepare();
             setupVisualizer();
             mMediaPlayer.start();
             animRotate();
+
+            tvBPM.setText(song.getBitrate());
+
+            progressbar.setProgress(0);
+            progressbar.setMax(100);
+            updateProgressBar();
+
             isSongPlaying = true;
+
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (IllegalStateException e) {
@@ -197,6 +214,22 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             e.printStackTrace();
         }
     }
+
+    public void updateProgressBar() {
+        mHandler.postDelayed(mUpdateTimeTask, 100);
+    }
+
+    private Runnable mUpdateTimeTask = new Runnable() {
+        public void run() {
+            long totalDuration = mMediaPlayer.getDuration();
+            long currentDuration = mMediaPlayer.getCurrentPosition();
+
+            int progress = (int) (utils.getProgressPercentage(currentDuration, totalDuration));
+            progressbar.setProgress(progress);
+
+            mHandler.postDelayed(this, 100);
+        }
+    };
 
     private void resetanim() {
         circleViewWrapper.clearAnimation();
@@ -208,7 +241,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     protected void onPause() {
         super.onPause();
 
-        Log.e("c", "Pause");
         // on pause turn off the flash
         //turnOffFlash();
 
@@ -218,7 +250,8 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             mVisualizer.setEnabled(false);
 
         if (isFinishing() && mMediaPlayer != null) {
-            mVisualizer.release();
+            if (mVisualizer != null)
+                mVisualizer.release();
             mMediaPlayer.release();
             mMediaPlayer = null;
         }
@@ -229,7 +262,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     @Override
     protected void onResume() {
         super.onResume();
-        Log.e("c", "Resume");
         if (isSongPlaying && !isSongSelected && mVisualizer != null) {
             mVisualizer.setEnabled(true);
             animRotate();
@@ -240,7 +272,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     @Override
     protected void onStop() {
         super.onStop();
-        Log.e("c", "Stop");
 
         // on stop release the camera
         /*if (camera != null) {
@@ -262,6 +293,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         intent.putExtra("flag", context.getClass().getSimpleName());
         context.startActivity(intent);
     }
+
 
     @Override
     public void onCompletion(MediaPlayer mp) {
@@ -299,6 +331,31 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
         visualizerView.updateVisualizerFFT(fft);
     }
+
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+    }
+
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) {
+        mHandler.removeCallbacks(mUpdateTimeTask);
+    }
+
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) {
+        mHandler.removeCallbacks(mUpdateTimeTask);
+        int totalDuration = mMediaPlayer.getDuration();
+        int currentPosition = utils.progressToTimer(seekBar.getProgress(), totalDuration);
+
+        // forward or backward to certain seconds
+        mMediaPlayer.seekTo(currentPosition);
+
+        // update timer progress again
+        updateProgressBar();
+    }
+
+
+
 
 
 

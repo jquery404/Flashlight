@@ -42,6 +42,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
         Song song = songs.get(i);
         holder.songTitle.setText(song.getName());
         holder.songDuration.setText(song.getDuration());
+        holder.songArtist.setText(song.getArtist());
     }
 
     @Override
@@ -56,6 +57,8 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
         TextView songTitle;
         @BindView(R.id.song_duration)
         TextView songDuration;
+        @BindView(R.id.song_artist)
+        TextView songArtist;
 
         ArrayList<Song> songs = new ArrayList<>();
         Context context;

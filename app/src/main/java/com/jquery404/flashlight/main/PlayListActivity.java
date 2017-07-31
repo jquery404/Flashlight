@@ -84,9 +84,15 @@ public class PlayListActivity extends Activity {
                 song.getName().endsWith(".MP3")) {
             MediaMetadataRetriever mmr = new MediaMetadataRetriever();
             mmr.setDataSource(song.getPath());
-
+            String title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
             String bitrate = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
             String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            String artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
+            if (artist == null)
+                artist = getString(R.string.unknown);
+            if (title == null)
+                title = song.getName().substring(0, (song.getName().length() - 4));
+
             long dur = Long.parseLong(duration);
             String seconds = String.valueOf((dur % 60000) / 1000);
             String minutes = String.valueOf(dur / 60000);
@@ -95,8 +101,7 @@ public class PlayListActivity extends Activity {
             } else {
                 out = ("0" + minutes + ":" + seconds);
             }
-            Song mSong = new Song(song.getName().substring(0, (song.getName().length() - 4)),
-                    song.getPath(), "" + (Integer.parseInt(bitrate)) / 1000, out);
+            Song mSong = new Song(title, song.getPath(), "" + (Integer.parseInt(bitrate)) / 1000, out, artist);
 
             songsList.add(mSong);
         }

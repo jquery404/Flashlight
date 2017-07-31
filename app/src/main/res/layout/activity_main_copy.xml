@@ -17,7 +17,15 @@
         <com.jquery404.flashlight.main.VisualizerView
             android:id="@+id/myvisualizerview"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="75dp"/>
+
+        <SeekBar
+            android:id="@+id/seek_bar"
+            android:layout_width="match_parent"
+            android:layout_height="25dp"
+            android:layout_below="@id/myvisualizerview"
+            android:progressDrawable="@color/bit3"
+            android:thumb="@android:drawable/ic_input_add"/>
 
     </RelativeLayout>
 
