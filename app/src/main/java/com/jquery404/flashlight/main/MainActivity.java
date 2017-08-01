@@ -8,7 +8,6 @@ import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v4.content.ContextCompat;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.animation.Animation;
@@ -21,7 +20,6 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.jquery404.flashlight.R;
 import com.jquery404.flashlight.adapter.Song;
-import com.jquery404.flashlight.helper.Utils;
 import com.jquery404.flashlight.manager.Utilities;
 
 import java.io.IOException;
@@ -110,6 +108,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     public void initView() {
         AdRequest adRequest = new AdRequest.Builder().build();
         adView.loadAd(adRequest);
+        progressbar.setPadding(0, 0, 0, 0);
     }
 
     private void initEmu() {
@@ -219,6 +218,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         mHandler.postDelayed(mUpdateTimeTask, 100);
     }
 
+
     private Runnable mUpdateTimeTask = new Runnable() {
         public void run() {
             long totalDuration = mMediaPlayer.getDuration();
@@ -252,6 +252,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         if (isFinishing() && mMediaPlayer != null) {
             if (mVisualizer != null)
                 mVisualizer.release();
+            mHandler.removeCallbacks(mUpdateTimeTask);
             mMediaPlayer.release();
             mMediaPlayer = null;
         }
@@ -272,6 +273,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     @Override
     protected void onStop() {
         super.onStop();
+
 
         // on stop release the camera
         /*if (camera != null) {
@@ -308,7 +310,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
         visualizerView.updateVisualizer(waveform);
 
-        if (waveform != null) {
+        /*if (waveform != null) {
             intensity[0] = ((float) waveform[0] + 128f) / 256;
             intensity[1] = ((float) waveform[1] + 128f) / 256;
             intensity[2] = ((float) waveform[2] + 128f) / 256;
@@ -324,7 +326,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
                 colorCounter += 0.03f;
                 //turnOffFlash();
             }
-        }
+        }*/
     }
 
     @Override
@@ -346,11 +348,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         mHandler.removeCallbacks(mUpdateTimeTask);
         int totalDuration = mMediaPlayer.getDuration();
         int currentPosition = utils.progressToTimer(seekBar.getProgress(), totalDuration);
-
-        // forward or backward to certain seconds
         mMediaPlayer.seekTo(currentPosition);
-
-        // update timer progress again
         updateProgressBar();
     }
 

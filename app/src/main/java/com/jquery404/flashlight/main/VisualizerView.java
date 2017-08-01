@@ -3,12 +3,12 @@ package com.jquery404.flashlight.main;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.view.View;
-
-import com.jquery404.flashlight.helper.Utils;
 
 /**
  * Created by Faisal on 7/2/17.
@@ -22,9 +22,9 @@ public class VisualizerView extends View {
     private Rect mRect = new Rect();
     private Paint mForePaint = new Paint();
     private float amplitude = 0;
-    int mDivisions = 4;
     boolean mTop = false;
     private float colorCounter = 0;
+    private LinearGradient gradientColor;
 
 
     public VisualizerView(Context context) {
@@ -47,6 +47,7 @@ public class VisualizerView extends View {
         mForePaint.setStrokeWidth(1f);
         mForePaint.setAntiAlias(true);
         mForePaint.setColor(Color.rgb(255, 255, 255));
+        gradientColor = new LinearGradient(0, 0, 0, getHeight(), Color.RED, Color.YELLOW, Shader.TileMode.MIRROR);
     }
 
     public void updateVisualizer(byte[] bytes) {
@@ -89,7 +90,27 @@ public class VisualizerView extends View {
             mPoints = new float[mBytes.length * 4];
 
         mRect.set(0, 0, getWidth(), getHeight());
+        mForePaint.setColor(0xff800000);
+        mForePaint.setShader(gradientColor);
 
+        //canvas.drawLine(0, 100, mRect.width(), 100, mForePaint);
+
+        int mDivisions = 2;
+
+        for (int i = 0; i < mBytes.length / mDivisions; i++) {
+            mPoints[i * 4] = i;
+            mPoints[i * 4 + 1] = 100;
+            mPoints[i * 4 + 2] = mRect.width();
+            mPoints[i * 4 + 3] = 100;
+        }
+
+
+        /*
+        Utils.cycleColor(colorCounter)
+        colorCounter += 0.03;*/
+
+
+        /* wave generation */
         /*for (int i = 0; i < mBytes.length - 1; i++) {
             mPoints[i * 4] = mRect.width() * i / (mBytes.length - 1);
             mPoints[i * 4 + 1] = mRect.height() / 2 + ((byte) (mBytes[i] + 128)) * (mRect.height() / 2) / 128;
@@ -97,12 +118,10 @@ public class VisualizerView extends View {
             mPoints[i * 4 + 3] = mRect.height() / 2 + ((byte) (mBytes[i + 1] + 128)) * (mRect.height() / 2) / 128;
         }*/
 
-        mForePaint.setColor(Utils.cycleColor(colorCounter));
-        colorCounter += 0.03;
 
 
-        // Bar graph
-        for (int i = 0; i < mBytes.length / mDivisions; i++) {
+        /* bar graph */
+        /*for (int i = 0; i < mBytes.length / mDivisions; i++) {
             mPoints[i * 4] = i * 4 * mDivisions;
             mPoints[i * 4 + 2] = i * 4 * mDivisions;
             byte rfk = mBytes[mDivisions * i];
@@ -119,7 +138,7 @@ public class VisualizerView extends View {
             }
         }
 
-        // Calc amplitude for this waveform
+
         float accumulator = 0;
         for (int i = 0; i < mBytes.length - 1; i++) {
             accumulator += Math.abs(mBytes[i]);
@@ -132,35 +151,9 @@ public class VisualizerView extends View {
         } else {
             amplitude *= 0.99;
             canvas.drawLines(mPoints, mForePaint);
-        }
+        }*/
 
-
-
-
-        /* ------- */
-        if (mBytes == null) {
-            return;
-        }
-
-        if (mPoints == null || mPoints.length < mBytes.length * 4) {
-            mPoints = new float[mBytes.length * 4];
-        }
-
-        mRect.set(0, 0, getWidth(), getHeight());
-
-        for (int i = 0; i < mBytes.length - 1; i++) {
-            mPoints[i * 4] = mRect.width() * i / (mBytes.length - 1);
-            mPoints[i * 4 + 1] = mRect.height() / 2
-                    + ((byte) (mBytes[i] + 128)) * (mRect.height() / 2) / 128;
-            mPoints[i * 4 + 2] = mRect.width() * (i + 1) / (mBytes.length - 1);
-            mPoints[i * 4 + 3] = mRect.height() / 2
-                    + ((byte) (mBytes[i + 1] + 128)) * (mRect.height() / 2) / 128;
-        }
-
-        canvas.drawLines(mPoints, mForePaint);
-
-
-        // bar
+        /* bar */
         /*for (int i = 0; i < mBytes.length / 2; i++) {
             mPoints[i * 4] = i * 8;
             mPoints[i * 4 + 1] = 0;
@@ -172,8 +165,7 @@ public class VisualizerView extends View {
             mPoints[i * 4 + 3] = (float) (dbValue * 7);
         }*/
 
-//        canvas.drawLines(mPoints, mForePaint);
+
+        canvas.drawLines(mPoints, mForePaint);
     }
-
-
 }

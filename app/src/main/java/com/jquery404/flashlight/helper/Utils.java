@@ -3,6 +3,7 @@ package com.jquery404.flashlight.helper;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 
 import com.jquery404.flashlight.R;
 
