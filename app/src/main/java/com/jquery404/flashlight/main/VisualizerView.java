@@ -90,15 +90,13 @@ public class VisualizerView extends View {
             mPoints = new float[mBytes.length * 4];
 
         mRect.set(0, 0, getWidth(), getHeight());
-        mForePaint.setColor(0xff800000);
         mForePaint.setShader(gradientColor);
-
-        //canvas.drawLine(0, 100, mRect.width(), 100, mForePaint);
 
         int mDivisions = 2;
 
+        // (0,0) (100,0) // (0,100) (100,100)
         for (int i = 0; i < mBytes.length / mDivisions; i++) {
-            mPoints[i * 4] = i;
+            mPoints[i * 4] = 0;
             mPoints[i * 4 + 1] = 100;
             mPoints[i * 4 + 2] = mRect.width();
             mPoints[i * 4 + 3] = 100;
