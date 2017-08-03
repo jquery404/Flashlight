@@ -4,6 +4,7 @@ android {
     compileSdkVersion 25
     buildToolsVersion "25.0.3"
     defaultConfig {
+        vectorDrawables.useSupportLibrary = true
         applicationId "com.jquery404.flashlight"
         minSdkVersion 16
         targetSdkVersion 25
@@ -47,7 +48,7 @@ dependencies {
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
 
     // permission
-    compile 'pub.devrel:easypermissions:0.4.2'
+    compile 'pub.devrel:easypermissions:0.4.3'
 
     // admob
     compile 'com.google.android.gms:play-services-ads:11.0.2'

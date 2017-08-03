@@ -1,18 +1,24 @@
 package com.jquery404.flashlight.main;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.hardware.Camera;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.ImageButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -20,20 +26,25 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.jquery404.flashlight.R;
 import com.jquery404.flashlight.adapter.Song;
+import com.jquery404.flashlight.helper.Utils;
 import com.jquery404.flashlight.manager.Utilities;
 
 import java.io.IOException;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import pub.devrel.easypermissions.AfterPermissionGranted;
+import pub.devrel.easypermissions.AppSettingsDialog;
+import pub.devrel.easypermissions.EasyPermissions;
 
 /**
  * Created by Faisal on 6/30/17.
  */
 
-public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Callback,
-        MediaPlayer.OnCompletionListener, Visualizer.OnDataCaptureListener, SeekBar.OnSeekBarChangeListener {
+public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Callback, MediaPlayer.OnCompletionListener,
+        Visualizer.OnDataCaptureListener, SeekBar.OnSeekBarChangeListener, EasyPermissions.PermissionCallbacks {
 
     /*
 
@@ -51,6 +62,9 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     @BindView(R.id.seek_bar)
     SeekBar progressbar;
 
+    @BindView(R.id.preview)
+    SurfaceView preview;
+
     @BindView(R.id.background_beat)
     View backgroundBeat;
     @BindView(R.id.soundplate)
@@ -61,12 +75,18 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     View circleViewWrapper;
 
     @BindView(R.id.btn_browser)
-    ImageButton btnBrowser;
+    View btnBrowser;
 
     @BindView(R.id.adView)
     AdView adView;
 
-    private static final int REQUEST_PATH = 1;
+    private static final int REQUEST_PATH = 121;
+    private static final int REQUEST_CAMERA_MIC_STORAGE = 122;
+    private String[] perms = {
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.READ_EXTERNAL_STORAGE};
+
     private Animation shakeAnimation, rotateAnimation;
     private MediaPlayer mMediaPlayer;
     private Visualizer mVisualizer;
@@ -77,13 +97,11 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     private Utilities utils;
 
 
-    /*
     private Camera camera;
     private boolean isFlashOn;
     private boolean hasFlash;
     Camera.Parameters params;
     SurfaceHolder mHolder;
-    SurfaceView preview;*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,14 +111,8 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         ButterKnife.bind(this);
 
         initView();
-        initAudio();
-        //initEmu();
 
-        /*checkFlash();
-        isFlashOn = false;
-
-        getCamera();
-        initAudio();*/
+        onAskPermission();
 
     }
 
@@ -132,6 +144,17 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         mMediaPlayer.setOnCompletionListener(this);
         utils = new Utilities();
 
+        if (checkFlash()) {
+            hasFlash = true;
+            getCamera();
+        } else {
+            android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(MainActivity.this);
+            alert.setTitle("Error!");
+            alert.setMessage("Your phone does not have the flash!");
+            alert.setPositiveButton("OK", (d, i) -> finish());
+        }
+
+
     }
 
     public void animShakeBox() {
@@ -150,17 +173,22 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
-        /*mHolder = holder;
-        try {
-            camera.setPreviewDisplay(mHolder);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
+        mHolder = holder;
+        if (camera != null) {
+            try {
+                camera.setPreviewDisplay(mHolder);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) {
-        /*camera.stopPreview();
-        mHolder = null;*/
+        if (camera != null) {
+            camera.stopPreview();
+            mHolder = null;
+        }
     }
 
 
@@ -168,24 +196,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     public void onClickBrowser() {
         Intent i = new Intent(this, PlayListActivity.class);
         startActivityForResult(i, REQUEST_PATH);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-
-        if (requestCode == REQUEST_PATH) {
-            if (resultCode == Activity.RESULT_OK) {
-                Song song = new Song();
-                song.setPath(data.getStringExtra("songPath"));
-                song.setBitrate(data.getStringExtra("songBPM"));
-                playSong(song);
-                isSongSelected = true;
-            } else {
-                isSongSelected = false;
-            }
-        }
     }
 
     public void playSong(Song song) {
@@ -242,8 +252,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         super.onPause();
 
         // on pause turn off the flash
-        //turnOffFlash();
-
+        turnOffFlash();
         resetanim();
 
         if (mVisualizer != null)
@@ -274,12 +283,15 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     protected void onStop() {
         super.onStop();
 
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying())
+            mMediaPlayer.stop();
+
 
         // on stop release the camera
-        /*if (camera != null) {
+        if (camera != null) {
             camera.release();
             camera = null;
-        }*/
+        }
     }
 
     private void setupVisualizer() {
@@ -310,7 +322,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
         visualizerView.updateVisualizer(waveform);
 
-        /*if (waveform != null) {
+        if (waveform != null) {
             intensity[0] = ((float) waveform[0] + 128f) / 256;
             intensity[1] = ((float) waveform[1] + 128f) / 256;
             intensity[2] = ((float) waveform[2] + 128f) / 256;
@@ -320,13 +332,13 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
                 backgroundBeat.setBackgroundColor(ContextCompat.getColor(
                         getApplicationContext(), R.color.bit7));
                 animShakeBox();
-                //turnOnFlash();
+                turnOnFlash();
             } else {
                 backgroundBeat.setBackgroundColor(Utils.getColorId(getApplicationContext()));
                 colorCounter += 0.03f;
-                //turnOffFlash();
+                turnOffFlash();
             }
-        }*/
+        }
     }
 
     @Override
@@ -352,36 +364,65 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         updateProgressBar();
     }
 
+    @AfterPermissionGranted(REQUEST_CAMERA_MIC_STORAGE)
+    void onAskPermission() {
 
-
-
-
-
-
-
-
-    /*public void checkFlash() {
-        hasFlash = getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
-
-        if (!hasFlash) {
-            android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(MainActivity.this);
-            alert.setTitle("Error!");
-            alert.setMessage("Your phone does not have the flash!");
-            alert.setPositiveButton("OK", (d, i) -> finish());
+        if (EasyPermissions.hasPermissions(this, perms)) {
+            initAudio();
         } else {
-            Toast.makeText(this, "Have", Toast.LENGTH_SHORT).show();
+            EasyPermissions.requestPermissions(this,
+                    getString(R.string.request_permission_camera_record_storage),
+                    REQUEST_CAMERA_MIC_STORAGE, perms);
         }
-
     }
 
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
 
 
+        if (requestCode == REQUEST_PATH) {
+            if (resultCode == Activity.RESULT_OK) {
+                Song song = new Song();
+                song.setPath(data.getStringExtra("songPath"));
+                song.setBitrate(data.getStringExtra("songBPM"));
+                playSong(song);
+                isSongSelected = true;
+            } else {
+                isSongSelected = false;
+            }
+        }
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, MainActivity.this);
+    }
+
+    @Override
+    public void onPermissionsGranted(int requestCode, List<String> perms) {
+        Log.d("TAG", "Permission has been granted");
+    }
+
+    @Override
+    public void onPermissionsDenied(int requestCode, List<String> perms) {
+        Log.d("TAG", "Permission has been denied");
+        if (EasyPermissions.somePermissionPermanentlyDenied(this, perms)) {
+            new AppSettingsDialog.Builder(this).build().show();
+        }
+    }
+
+
+    public boolean checkFlash() {
+        return getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
+    }
 
 
     // getting camera parameters
     private void getCamera() {
-        preview = (SurfaceView) findViewById(R.id.PREVIEW);
         mHolder = preview.getHolder();
         //mHolder.addCallback(this);
         mHolder.addCallback(MainActivity.this);
@@ -403,37 +444,8 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     }
 
 
-
-
-
-
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        getCamera();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
-    */
-
-
-
-    /*@OnClick(R.id.toggle_btn_play)
-    public void onTogglePlay() {
-        Intent i = new Intent(getApplicationContext(), PlayListActivity.class);
-        startActivityForResult(i, 100);
-    }
-
-    */
-
-
-    /*private void turnOnFlash() {
-        if (!isFlashOn) {
+    private void turnOnFlash() {
+        if (!isFlashOn && hasFlash) {
             if (camera == null || params == null) {
                 return;
             }
@@ -441,14 +453,14 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             isFlashOn = true;
 
             params = camera.getParameters();
-            params.setFlashMode(Parameters.FLASH_MODE_TORCH);
+            params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
             camera.setParameters(params);
             camera.startPreview();
         }
     }
 
     private void turnOffFlash() {
-        if (isFlashOn) {
+        if (isFlashOn && hasFlash) {
             if (camera == null || params == null) {
                 return;
             }
@@ -456,10 +468,10 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             isFlashOn = false;
 
             params = camera.getParameters();
-            params.setFlashMode(Parameters.FLASH_MODE_OFF);
+            params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
             camera.setParameters(params);
             camera.stopPreview();
         }
-    }*/
+    }
 
 }

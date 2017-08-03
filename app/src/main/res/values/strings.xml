@@ -12,6 +12,10 @@
     <string name="start_recording">Start Recording</string>
     <string name="stop_recording">Stop Recording</string>
 
+    <!-- Permission -->
+    <string name="open_camera">OPEN CAMERA</string>
+    <string name="request_permission_camera_record_storage">This lets you use your Camera flashlight inside of Flashlight. This lets Flashlight to visualise song that playing on the device. This lets Flashlight access media like songs on your phone and its SD Card.</string>
+
     <!-- Playlist activity -->
     <string name="playlist_title">Playlists</string>
     <string name="default_bpm">000</string>

@@ -3,7 +3,6 @@ package com.jquery404.flashlight.helper;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 
 import com.jquery404.flashlight.R;
 
@@ -17,16 +16,13 @@ public class Utils {
         String finalTimerString = "";
         String secondsString = "";
 
-        // Convert total duration into time
         int hours = (int) (milliseconds / (1000 * 60 * 60));
         int minutes = (int) (milliseconds % (1000 * 60 * 60)) / (1000 * 60);
         int seconds = (int) ((milliseconds % (1000 * 60 * 60)) % (1000 * 60) / 1000);
-        // Add hours if there
         if (hours > 0) {
             finalTimerString = hours + ":";
         }
 
-        // Prepending 0 to seconds if it is one digit
         if (seconds < 10) {
             secondsString = "0" + seconds;
         } else {
@@ -35,7 +31,6 @@ public class Utils {
 
         finalTimerString = finalTimerString + minutes + ":" + secondsString;
 
-        // return timer string
         return finalTimerString;
     }
 
@@ -45,10 +40,8 @@ public class Utils {
         long currentSeconds = (int) (currentDuration / 1000);
         long totalSeconds = (int) (totalDuration / 1000);
 
-        // calculating percentage
         percentage = (((double) currentSeconds) / totalSeconds) * 100;
 
-        // return percentage
         return percentage.intValue();
     }
 
@@ -57,7 +50,6 @@ public class Utils {
         totalDuration = (int) (totalDuration / 1000);
         currentDuration = (int) ((((double) progress) / 100) * totalDuration);
 
-        // return current duration in milliseconds
         return currentDuration * 1000;
     }
 

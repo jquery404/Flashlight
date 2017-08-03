@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -18,9 +17,10 @@ public class VisualizerView extends View {
 
     private byte[] mBytes, mFFTBytes;
     private double dbAmp;
-    private float[] mPoints;
+    private float[] mPoints, mPointsLine;
     private Rect mRect = new Rect();
     private Paint mForePaint = new Paint();
+    private Paint mDownPaint = new Paint();
     private float amplitude = 0;
     boolean mTop = false;
     private float colorCounter = 0;
@@ -44,10 +44,15 @@ public class VisualizerView extends View {
 
     private void init() {
         mBytes = null;
-        mForePaint.setStrokeWidth(1f);
+        mDownPaint.setStrokeWidth(8f);
+        mDownPaint.setAntiAlias(true);
+        mDownPaint.setColor(Color.WHITE);
+
+        mForePaint.setStrokeWidth(8f);
         mForePaint.setAntiAlias(true);
-        mForePaint.setColor(Color.rgb(255, 255, 255));
-        gradientColor = new LinearGradient(0, 0, 0, getHeight(), Color.RED, Color.YELLOW, Shader.TileMode.MIRROR);
+        //gradientColor = new LinearGradient(0, 0, 0, getHeight(), Color.RED, Color.YELLOW, Shader.TileMode.MIRROR);
+        mForePaint.setColor(Color.YELLOW);
+
     }
 
     public void updateVisualizer(byte[] bytes) {
@@ -86,25 +91,39 @@ public class VisualizerView extends View {
         if (mBytes == null)
             return;
 
-        if (mPoints == null || mPoints.length < mBytes.length * 4)
+        if (mPoints == null || mPoints.length < mBytes.length * 4) {
             mPoints = new float[mBytes.length * 4];
+            mPointsLine = new float[mBytes.length * 4];
+        }
 
         mRect.set(0, 0, getWidth(), getHeight());
-        mForePaint.setShader(gradientColor);
 
-        int mDivisions = 2;
+        int mDivisions = 4;
 
         // (0,0) (100,0) // (0,100) (100,100)
         for (int i = 0; i < mBytes.length / mDivisions; i++) {
-            mPoints[i * 4] = 0;
-            mPoints[i * 4 + 1] = 100;
-            mPoints[i * 4 + 2] = mRect.width();
-            mPoints[i * 4 + 3] = 100;
+            byte rfk = mBytes[mDivisions * i];
+            byte ifk = mBytes[mDivisions * i + 1];
+            float magnitude = (rfk * rfk + ifk * ifk);
+            int dbValue = (int) (10 * Math.log10(magnitude));
+
+            mPointsLine[i * 4] = i * 4 * mDivisions;
+            mPointsLine[i * 4 + 1] = mRect.height() / 2;
+            mPointsLine[i * 4 + 2] = i * 4 * mDivisions;
+            mPointsLine[i * 4 + 3] = mRect.height() / 2 - (dbValue * 2 - 90);
+
+            mPoints[i * 4] = i * 4 * mDivisions;
+            mPoints[i * 4 + 1] = mRect.height() / 2;
+            mPoints[i * 4 + 2] = i * 4 * mDivisions;
+            mPoints[i * 4 + 3] = mRect.height() / 2 + (dbValue * 2 - 90);
         }
 
 
-        /*
-        Utils.cycleColor(colorCounter)
+        canvas.drawLines(mPoints, mForePaint);
+        canvas.drawLines(mPointsLine, mDownPaint);
+
+
+        /*Utils.cycleColor(colorCounter)
         colorCounter += 0.03;*/
 
 
@@ -164,6 +183,5 @@ public class VisualizerView extends View {
         }*/
 
 
-        canvas.drawLines(mPoints, mForePaint);
     }
 }
