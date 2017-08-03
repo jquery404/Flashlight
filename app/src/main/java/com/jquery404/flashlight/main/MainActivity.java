@@ -12,6 +12,8 @@ import android.media.audiofx.Visualizer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.AppCompatImageView;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -25,6 +27,7 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.jquery404.flashlight.R;
 import com.jquery404.flashlight.adapter.Song;
+import com.jquery404.flashlight.helper.Utils;
 import com.jquery404.flashlight.manager.Utilities;
 
 import java.io.IOException;
@@ -64,9 +67,13 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     View circleView;
     @BindView(R.id.circleview_wrapper)
     View circleViewWrapper;
-
     @BindView(R.id.btn_browser)
     View btnBrowser;
+
+    @BindView(R.id.flash_light)
+    AppCompatImageView btnFlash;
+    @BindView(R.id.btn_playback)
+    AppCompatImageView btnPlay;
 
     @BindView(R.id.adView)
     AdView adView;
@@ -86,6 +93,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     private Handler mHandler = new Handler();
     private Utilities utils;
     private Camera camera;
+    private boolean useFlash;
     private boolean isFlashOn;
     private boolean hasFlash;
     Camera.Parameters params;
@@ -106,6 +114,10 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         AdRequest adRequest = new AdRequest.Builder().build();
         adView.loadAd(adRequest);
         progressbar.setPadding(0, 0, 0, 0);
+        useFlash = true;
+        if (!isSongPlaying) {
+            btnPlay.setImageResource(R.drawable.ic_play_disable);
+        }
     }
 
     private void initEmu() {
@@ -168,11 +180,14 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
     public void surfaceCreated(SurfaceHolder holder) {
         mHolder = holder;
-        try {
-            camera.setPreviewDisplay(mHolder);
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (camera != null) {
+            try {
+                camera.setPreviewDisplay(mHolder);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
+
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) {
@@ -182,11 +197,35 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         }
     }
 
+    @OnClick(R.id.btn_playback)
+    public void onClickPlay() {
+        if(isSongSelected && isSongPlaying){
+            mMediaPlayer.pause();
+        }
+    }
 
     @OnClick(R.id.btn_browser)
     public void onClickBrowser() {
         Intent i = new Intent(this, PlayListActivity.class);
         startActivityForResult(i, REQUEST_PATH);
+    }
+
+    @OnClick(R.id.flash_light)
+    public void onClickFlashLight() {
+        if (hasFlash) {
+            useFlash = !useFlash;
+            if (useFlash) {
+                btnFlash.setImageResource(R.drawable.ic_flash_light);
+            } else {
+                btnFlash.setImageResource(R.drawable.ic_flash_light_off);
+                turnOffFlash();
+            }
+        } else {
+            android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(MainActivity.this);
+            alert.setTitle("Error!");
+            alert.setMessage("Your phone does not have the flash!");
+            alert.setPositiveButton("OK", (d, i) -> finish());
+        }
     }
 
     public void playSong(Song song) {
@@ -217,11 +256,14 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         }
     }
 
-    private void checkCamera(){
+    private void checkCamera() {
         if (checkFlash()) {
             hasFlash = true;
             getCamera();
+
         } else {
+            hasFlash = false;
+            btnFlash.setImageResource(R.drawable.ic_flash_light_disable);
             android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(MainActivity.this);
             alert.setTitle("Error!");
             alert.setMessage("Your phone does not have the flash!");
@@ -283,6 +325,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     protected void onResume() {
         super.onResume();
         if (isSongPlaying && !isSongSelected && mVisualizer != null) {
+            checkCamera();
             mVisualizer.setEnabled(true);
             animRotate();
         }
@@ -335,13 +378,15 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             intensity[3] = ((float) waveform[3] + 128f) / 256;
 
             if (intensity[3] < 0.5f) {
-               // backgroundBeat.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.bit7));
+                backgroundBeat.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.bit7));
                 animShakeBox();
-                turnOnFlash();
+                if (useFlash)
+                    turnOnFlash();
             } else {
-                //backgroundBeat.setBackgroundColor(Utils.getColorId(getApplicationContext()));
+                backgroundBeat.setBackgroundColor(Utils.getColorId(getApplicationContext()));
                 colorCounter += 0.03f;
-                turnOffFlash();
+                if (useFlash)
+                    turnOffFlash();
             }
         }
     }

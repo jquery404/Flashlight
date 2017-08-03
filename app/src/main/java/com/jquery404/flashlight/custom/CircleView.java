@@ -20,7 +20,7 @@ public class CircleView extends View {
     private Paint _paintCenter;
     private Paint _paint;
     private RectF rectF;
-
+    float centerX, centerY, height, width, radius;
 
     public CircleView(final Context context, final AttributeSet attrs) {
         super(context, attrs);
@@ -38,13 +38,13 @@ public class CircleView extends View {
 
     @Override
     protected void onDraw(final Canvas canvas) {
-        final float height = canvas.getHeight();
-        final float width = canvas.getWidth();
+        height = canvas.getHeight();
+        width = canvas.getWidth();
 
-        float radius = width > height ? height * 0.5F : width * 0.5F;
+        radius = width > height ? height * 0.5F : width * 0.5F;
 
-        final float centerX = canvas.getWidth() * 0.5F;
-        final float centerY = canvas.getHeight() * 0.5F;
+        centerX = canvas.getWidth() * 0.5F;
+        centerY = canvas.getHeight() * 0.5F;
 
         canvas.drawCircle(centerX, centerY, radius, _paint);
         rectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
