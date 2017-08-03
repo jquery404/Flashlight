@@ -6,8 +6,11 @@ import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
+
+import com.jquery404.flashlight.R;
 
 /**
  * Created by Faisal on 7/2/17.
@@ -21,6 +24,7 @@ public class VisualizerView extends View {
     private Rect mRect = new Rect();
     private Paint mForePaint = new Paint();
     private Paint mDownPaint = new Paint();
+    private Context context;
     private float amplitude = 0;
     boolean mTop = false;
     private float colorCounter = 0;
@@ -29,16 +33,19 @@ public class VisualizerView extends View {
 
     public VisualizerView(Context context) {
         super(context);
+        this.context = context;
         init();
     }
 
     public VisualizerView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        this.context = context;
         init();
     }
 
     public VisualizerView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        this.context = context;
         init();
     }
 
@@ -46,12 +53,11 @@ public class VisualizerView extends View {
         mBytes = null;
         mDownPaint.setStrokeWidth(8f);
         mDownPaint.setAntiAlias(true);
-        mDownPaint.setColor(Color.WHITE);
+        mDownPaint.setColor(ContextCompat.getColor(context, R.color.colorVisualizeBottom));
 
         mForePaint.setStrokeWidth(8f);
         mForePaint.setAntiAlias(true);
-        //gradientColor = new LinearGradient(0, 0, 0, getHeight(), Color.RED, Color.YELLOW, Shader.TileMode.MIRROR);
-        mForePaint.setColor(Color.YELLOW);
+        mForePaint.setColor(ContextCompat.getColor(context, R.color.colorVisualizeTop));
 
     }
 

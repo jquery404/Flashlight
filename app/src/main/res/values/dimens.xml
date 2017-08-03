@@ -2,4 +2,6 @@
     <dimen name="bubble_size">16dp</dimen>
     <dimen name="wave_height">16dp</dimen>
     <dimen name="footer_height">16dp</dimen>
+    <dimen name="btn_size">30dp</dimen>
+    <dimen name="btn_large_size">40dp</dimen>
 </resources>

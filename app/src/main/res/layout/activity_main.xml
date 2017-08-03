@@ -1,53 +1,108 @@
-<RelativeLayout
-    android:id="@+id/root"
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:ads="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/background_beat"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/background"
+    android:keepScreenOn="true"
     android:orientation="vertical">
 
-
     <RelativeLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:id="@+id/waveview"
+        android:layout_width="match_parent"
+        android:layout_height="100dp">
 
-
-        <View
-            android:id="@+id/bit_a"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/bit0"
-            android:padding="5dp"/>
+        <SurfaceView
+            android:id="@+id/preview"
+            android:layout_width="1dip"
+            android:layout_height="1dip"
+            android:background="#000" />
 
         <com.jquery404.flashlight.main.VisualizerView
             android:id="@+id/myvisualizerview"
             android:layout_width="match_parent"
-            android:layout_height="400dp"/>
+            android:layout_height="match_parent" />
 
-        <ImageView
-            android:id="@+id/btn_play"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:src="@drawable/logo"/>
-
-
-        <TextView
-            android:id="@+id/songTitleLabel"
+        <SeekBar
+            android:id="@+id/seek_bar"
+            style="@style/flashlightSeekbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:layout_below="@+id/btn_play"/>
+            android:layout_height="match_parent" />
 
     </RelativeLayout>
 
-    <SurfaceView
-        android:id="@+id/PREVIEW"
-        android:layout_width="1dip"
-        android:layout_height="1dip"
-        android:background="#000"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/adView">
+
+        <View
+            android:id="@+id/soundplate"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:background="@drawable/soundplate" />
+
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true">
+
+            <RelativeLayout
+                android:id="@+id/circleview_wrapper"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true">
+
+                <com.jquery404.flashlight.custom.CircleView
+                    android:id="@+id/circleview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <TextView
+                    android:id="@+id/bpm"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center|center_vertical"
+                    android:text="@string/default_bpm"
+                    android:textColor="@color/colorTopHalfCircle"
+                    android:textSize="24sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="40dp"
+                    android:gravity="center|center_vertical"
+                    android:text="@string/bpm_title"
+                    android:textColor="@color/colorBottomHalfCircle"
+                    android:textSize="12sp" />
+            </RelativeLayout>
+
+
+            <RelativeLayout
+                android:id="@+id/relativeLayout"
+                android:layout_width="match_parent"
+                android:layout_height="70dp"
+                android:layout_alignParentBottom="true"
+                android:background="@color/colorPrimaryDarkBottom">
+
+                <include
+                    layout="@layout/layout_bottom_nav"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+    </RelativeLayout>
 
 
     <com.google.android.gms.ads.AdView
@@ -59,6 +114,7 @@
         android:layout_alignParentStart="true"
         android:background="#000000"
         ads:adSize="SMART_BANNER"
-        ads:adUnitId="@string/banner_home_footer"/>
-</RelativeLayout>
+        ads:adUnitId="@string/banner_home_footer" />
 
+
+</RelativeLayout>

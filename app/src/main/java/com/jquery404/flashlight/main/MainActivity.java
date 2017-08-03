@@ -12,7 +12,6 @@ import android.media.audiofx.Visualizer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -26,7 +25,6 @@ import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.jquery404.flashlight.R;
 import com.jquery404.flashlight.adapter.Song;
-import com.jquery404.flashlight.helper.Utils;
 import com.jquery404.flashlight.manager.Utilities;
 
 import java.io.IOException;
@@ -45,13 +43,6 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Callback, MediaPlayer.OnCompletionListener,
         Visualizer.OnDataCaptureListener, SeekBar.OnSeekBarChangeListener, EasyPermissions.PermissionCallbacks {
-
-    /*
-
-    @BindView(R.id.bit_a)
-    View bitA;
-    @BindView(R.id.songTitleLabel)
-    TextView tvSongTitle;*/
 
     @BindView(R.id.myvisualizerview)
     VisualizerView visualizerView;
@@ -87,7 +78,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_EXTERNAL_STORAGE};
 
-    private Animation shakeAnimation, rotateAnimation;
     private MediaPlayer mMediaPlayer;
     private Visualizer mVisualizer;
     public float[] intensity = new float[4];
@@ -95,8 +85,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     private boolean isSongSelected, isSongPlaying;
     private Handler mHandler = new Handler();
     private Utilities utils;
-
-
     private Camera camera;
     private boolean isFlashOn;
     private boolean hasFlash;
@@ -106,14 +94,11 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main_copy);
+        setContentView(R.layout.activity_main);
 
         ButterKnife.bind(this);
-
         initView();
-
         onAskPermission();
-
     }
 
 
@@ -143,45 +128,51 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setOnCompletionListener(this);
         utils = new Utilities();
-
-        if (checkFlash()) {
-            hasFlash = true;
-            getCamera();
-        } else {
-            android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(MainActivity.this);
-            alert.setTitle("Error!");
-            alert.setMessage("Your phone does not have the flash!");
-            alert.setPositiveButton("OK", (d, i) -> finish());
-        }
-
-
     }
 
     public void animShakeBox() {
-        shakeAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.anim_shake);
+        Animation shakeAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.anim_shake);
         soundPlate.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         soundPlate.startAnimation(shakeAnimation);
     }
 
     public void animRotate() {
-        rotateAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.anim_rotate);
+        Animation rotateAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.anim_rotate);
         circleViewWrapper.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         circleViewWrapper.startAnimation(rotateAnimation);
     }
+
+    // getting camera parameters
+    private void getCamera() {
+        mHolder = preview.getHolder();
+        mHolder.addCallback(this);
+        mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+        if (camera == null) {
+            try {
+                camera = Camera.open();
+                params = camera.getParameters();
+                try {
+                    camera.setPreviewDisplay(mHolder);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (RuntimeException e) {
+                Log.e("SUCA.", e.getMessage());
+            }
+        }
+    }
+
 
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
         mHolder = holder;
-        if (camera != null) {
-            try {
-                camera.setPreviewDisplay(mHolder);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        try {
+            camera.setPreviewDisplay(mHolder);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) {
@@ -200,6 +191,8 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
     public void playSong(Song song) {
         try {
+            checkCamera();
+
             mMediaPlayer.reset();
             mMediaPlayer.setDataSource(song.getPath());
             mMediaPlayer.prepare();
@@ -221,6 +214,18 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void checkCamera(){
+        if (checkFlash()) {
+            hasFlash = true;
+            getCamera();
+        } else {
+            android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(MainActivity.this);
+            alert.setTitle("Error!");
+            alert.setMessage("Your phone does not have the flash!");
+            alert.setPositiveButton("OK", (d, i) -> finish());
         }
     }
 
@@ -270,6 +275,11 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         if (isSongPlaying && !isSongSelected && mVisualizer != null) {
@@ -282,10 +292,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     @Override
     protected void onStop() {
         super.onStop();
-
-        if (mMediaPlayer != null && mMediaPlayer.isPlaying())
-            mMediaPlayer.stop();
-
 
         // on stop release the camera
         if (camera != null) {
@@ -329,12 +335,11 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             intensity[3] = ((float) waveform[3] + 128f) / 256;
 
             if (intensity[3] < 0.5f) {
-                backgroundBeat.setBackgroundColor(ContextCompat.getColor(
-                        getApplicationContext(), R.color.bit7));
+               // backgroundBeat.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.bit7));
                 animShakeBox();
                 turnOnFlash();
             } else {
-                backgroundBeat.setBackgroundColor(Utils.getColorId(getApplicationContext()));
+                //backgroundBeat.setBackgroundColor(Utils.getColorId(getApplicationContext()));
                 colorCounter += 0.03f;
                 turnOffFlash();
             }
@@ -419,30 +424,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     public boolean checkFlash() {
         return getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
     }
-
-
-    // getting camera parameters
-    private void getCamera() {
-        mHolder = preview.getHolder();
-        //mHolder.addCallback(this);
-        mHolder.addCallback(MainActivity.this);
-        //Android < 2.3.6 ha bisogno di sto hack
-        mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        if (camera == null) {
-            try {
-                camera = Camera.open();
-                params = camera.getParameters();
-                try {
-                    camera.setPreviewDisplay(mHolder);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } catch (RuntimeException e) {
-                Log.e("SUCA.", e.getMessage());
-            }
-        }
-    }
-
 
     private void turnOnFlash() {
         if (!isFlashOn && hasFlash) {
