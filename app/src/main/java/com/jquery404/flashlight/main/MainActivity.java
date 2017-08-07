@@ -9,6 +9,7 @@ import android.hardware.Camera;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -199,9 +200,24 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
     @OnClick(R.id.btn_playback)
     public void onClickPlay() {
-        if(isSongSelected && isSongPlaying){
+        if (isSongSelected && isSongPlaying) {
             mMediaPlayer.pause();
         }
+    }
+
+    @OnClick(R.id.btn_facebook)
+    public void onClickFacebook() {
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.addCategory(Intent.CATEGORY_BROWSABLE);
+        intent.setData(Uri.parse("http://facebook.com/jquery404/"));
+        startActivity(intent);
+    }
+
+
+    @OnClick(R.id.btn_about)
+    public void onClickAbout() {
+        AboutActivity.start(this);
     }
 
     @OnClick(R.id.btn_browser)

@@ -61,13 +61,13 @@ public class Utils {
     }
 
     public static int getColorId(Context context) {
-        int i = R.color.bit3;
+        int i = R.color.bit6;
         if (Math.random() * 10 < 3 && Math.random() * 10 > 5) {
             i = R.color.bit4;
         } else if (Math.random() * 10 < 5 && Math.random() * 10 > 7) {
-            i = R.color.bit6;
+            i = R.color.bit3;
         } else if (Math.random() * 10 < 7 && Math.random() * 10 > 9) {
-            i = R.color.bit2;
+            i = R.color.bit5;
         }
         return ContextCompat.getColor(context, i);
     }

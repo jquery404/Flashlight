@@ -22,6 +22,7 @@
             android:weightSum="2">
 
             <android.support.v7.widget.AppCompatImageView
+                android:id="@+id/btn_about"
                 android:layout_width="@dimen/btn_size"
                 android:layout_height="@dimen/btn_size"
                 android:layout_weight="1"
@@ -75,6 +76,7 @@
                 app:srcCompat="@drawable/ic_music_lib" />
 
             <android.support.v7.widget.AppCompatImageView
+                android:id="@+id/btn_facebook"
                 android:layout_width="@dimen/btn_size"
                 android:layout_height="@dimen/btn_size"
                 android:layout_weight="1"
