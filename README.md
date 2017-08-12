@@ -6,7 +6,7 @@ No need for glow sticks, Flashlight is the original disco light and dance light!
 Now its so easy to turn your home into party mode.
 
 
-###Features:
+### Features:
 
 - Beat Visualizer.
 - Always screen on.
