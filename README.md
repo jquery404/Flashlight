@@ -7,9 +7,9 @@ Now its so easy to turn your home into party mode.
 
 <br/>
 <b>Features:</b>
-- Beat Visualizer.
-- Always screen on.
-- Battery Optimized.
-- Works with the rhythm of your music.
-- With music and with the ability to add your own songs.
-- Multi-color, with maximum brightness and saturation.
+* Beat Visualizer.
+* Always screen on.
+* Battery Optimized.
+* Works with the rhythm of your music.
+* With music and with the ability to add your own songs.
+* Multi-color, with maximum brightness and saturation.
