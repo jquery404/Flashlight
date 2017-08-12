@@ -2,13 +2,11 @@ package com.jquery404.flashlight.main;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import com.jquery404.flashlight.R;
@@ -117,12 +115,12 @@ public class VisualizerView extends View {
             mPointsLine[i * 4] = i * 4 * mDivisions;
             mPointsLine[i * 4 + 1] = mRect.height() / 2;
             mPointsLine[i * 4 + 2] = i * 4 * mDivisions;
-            mPointsLine[i * 4 + 3] = mRect.height() / 2 - (dbValue * 2 - 90);
+            mPointsLine[i * 4 + 3] = mRect.height() / 2 - (2 * dbValue - 2 * 45);
 
             mPoints[i * 4] = i * 4 * mDivisions;
             mPoints[i * 4 + 1] = mRect.height() / 2;
             mPoints[i * 4 + 2] = i * 4 * mDivisions;
-            mPoints[i * 4 + 3] = mRect.height() / 2 + (dbValue * 2 - 90);
+            mPoints[i * 4 + 3] = mRect.height() / 2 + (4 * dbValue - 4 * 45);
         }
 
 

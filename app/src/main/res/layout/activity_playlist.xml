@@ -1,37 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:background="@drawable/background"
     android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:background="@color/colorPlayCardHeader"
+        android:background="@color/colorPrimaryDarkBottom"
         android:orientation="horizontal"
-        android:paddingLeft="24dp"
+        android:paddingLeft="12dp"
         android:paddingRight="24dp">
 
-        <ImageView
-            android:layout_width="48dp"
+        <android.support.v7.widget.AppCompatImageView
+            android:id="@+id/btn_browser"
+            android:layout_width="24dp"
             android:layout_height="match_parent"
             android:layout_gravity="center|center_vertical"
-            android:scaleType="fitCenter"
-            android:src="@android:drawable/btn_plus" />
+            app:srcCompat="@drawable/ic_music_lib"/>
 
         <TextView
             android:id="@+id/popularDirTitle"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingBottom="20dp"
+            android:layout_height="match_parent"
+            android:gravity="start|center_vertical"
             android:paddingEnd="20dp"
-            android:paddingLeft="2dp"
+            android:paddingLeft="12dp"
             android:paddingRight="20dp"
-            android:paddingStart="2dp"
-            android:paddingTop="20dp"
+            android:paddingStart="12dp"
             android:text="@string/playlist_title"
-            android:textColor="@color/colorPlayCardText" />
+            android:textSize="16sp"
+            android:textColor="@color/colorPlayCardText"/>
 
     </LinearLayout>
 
@@ -40,8 +42,7 @@
         android:id="@+id/recycler_playlist"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/colorPlayCard"
-        android:paddingLeft="20dp"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+        android:paddingLeft="48dp"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
 </LinearLayout>

@@ -3,12 +3,15 @@ package com.jquery404.flashlight.main;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.widget.TextView;
 
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
+import com.jquery404.flashlight.BuildConfig;
 import com.jquery404.flashlight.R;
 
+import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
@@ -17,6 +20,10 @@ import butterknife.OnClick;
  */
 
 public class AboutActivity extends BaseCompatActivity {
+    @BindView(R.id.app_version)
+    TextView tvVersion;
+
+
     private InterstitialAd mInterstitialAd;
 
     @Override
@@ -29,6 +36,7 @@ public class AboutActivity extends BaseCompatActivity {
     }
 
     private void initViews() {
+        tvVersion.setText(getString(R.string.app_name) + " " + BuildConfig.VERSION_NAME);
 
         mInterstitialAd = new InterstitialAd(this);
         mInterstitialAd.setAdUnitId(getString(R.string.interstitial_full_screen));

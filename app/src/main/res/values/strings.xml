@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Flashlight</string>
+    <string name="app_name_style"><b>Flash</b>\nlight</string>
     <string name="canvas">Canvas</string>
     <string name="opengl_es">OpenGL ES</string>
     <string name="title_permissions">Permissions</string>
@@ -14,7 +15,8 @@
 
     <!-- Permission -->
     <string name="open_camera">OPEN CAMERA</string>
-    <string name="request_permission_camera_record_storage">This lets you use your Camera flashlight inside of Flashlight. This lets Flashlight to visualise song that playing on the device. This lets Flashlight access media like songs on your phone and its SD Card.</string>
+    <string name="request_permission_camera_record_storage">Flashlight needs permission to access your <b>Camera, Storage and Microphone</b>.\n<b>Camera:</b> This lets Flashlight use your Camera flashlight inside the app.\n<b>Microphone:</b> This lets Flashlight to visualise song that playing on the device.\n<b>Storage:</b> This lets Flashlight access media like songs on your phone and its SD Card.</string>
+    <string name="returned_from_app_settings_to_activity">Returned from app settings to Flashlight</string>
 
     <!-- Playlist activity -->
     <string name="playlist_title">Playlists</string>
@@ -26,6 +28,7 @@
     <string name="activity_main">Flashlight</string>
     <string name="activity_playlist">Playlist</string>
     <string name="activity_about">About</string>
+    <string name="activity_about_text">The world first android app that turns your phone into disco light machine! Flashlight makes use of your phone\'s internal camera LED lights and microphone to create various lighting effects based on song you are playing. No need for glowsticks, Flashlight is the original disco light and dance light! Just turn on any music and it takes over pulsing to the beat of the music. Turn your home into party mode.\n\n\n\n\u00A9 2017 jQuery404. All rights reserved.</string>
 
     <!-- AdMob ad unit IDs -->
     <string name="banner_home_footer">ca-app-pub-7875491047514906/7124326070</string>

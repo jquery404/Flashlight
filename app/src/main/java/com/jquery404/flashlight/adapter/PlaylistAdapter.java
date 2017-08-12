@@ -78,6 +78,8 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
             returnIntent.putExtra("songPath", song.getPath());
             returnIntent.putExtra("songBPM", song.getBitrate());
             returnIntent.putExtra("songDuration", song.getDuration());
+            returnIntent.putExtra("songPosition", getAdapterPosition());
+
             ((Activity) context).setResult(Activity.RESULT_OK, returnIntent);
             ((Activity) context).finish();
         }

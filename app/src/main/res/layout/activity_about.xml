@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/background"
-    android:orientation="vertical">
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@drawable/background"
+              android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="fill_parent"
@@ -11,9 +11,9 @@
         android:orientation="vertical">
 
         <RelativeLayout
-            android:background="@color/colorPrimaryDarkBottom"
             android:layout_width="fill_parent"
             android:layout_height="fill_parent"
+            android:background="@color/colorPrimaryDarkBottom"
             android:padding="16dp">
 
             <TextView
@@ -23,7 +23,7 @@
                 android:layout_gravity="center"
                 android:gravity="center"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:textColor="#d1a94f" />
+                android:textColor="#d1a94f"/>
 
             <ImageButton
                 android:id="@+id/btn_close"
@@ -33,20 +33,60 @@
                 android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
                 android:background="@null"
-                android:src="@android:drawable/ic_menu_close_clear_cancel" />
+                android:src="@android:drawable/ic_menu_close_clear_cancel"/>
         </RelativeLayout>
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:padding="34dp">
 
             <ImageView
+                android:id="@+id/ic"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:src="@drawable/ic_launcher"
                 android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true" />
+                android:src="@drawable/ic_launcher"/>
+
+            <TextView
+                android:id="@+id/app_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_toEndOf="@+id/ic"
+                android:layout_toRightOf="@+id/ic"
+                android:text="@string/app_name_style"
+                android:textColor="#fff"
+                android:textSize="20sp"/>
+
         </RelativeLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/app_version"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="34dp"
+            android:paddingRight="34dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:textColor="#fff"
+            android:text="@string/activity_main"
+            android:textSize="12sp"/>
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="34dp"
+            android:paddingRight="34dp"
+            android:text="@string/activity_about_text"
+            android:textColor="#fff"/>
     </LinearLayout>
 
 

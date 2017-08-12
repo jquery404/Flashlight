@@ -13,7 +13,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -23,15 +22,17 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdView;
 import com.jquery404.flashlight.R;
 import com.jquery404.flashlight.adapter.Song;
-import com.jquery404.flashlight.helper.Utils;
+import com.jquery404.flashlight.custom.CircularSeekBar;
 import com.jquery404.flashlight.manager.Utilities;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
@@ -46,7 +47,7 @@ import pub.devrel.easypermissions.EasyPermissions;
  */
 
 public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Callback, MediaPlayer.OnCompletionListener,
-        Visualizer.OnDataCaptureListener, SeekBar.OnSeekBarChangeListener, EasyPermissions.PermissionCallbacks {
+        Visualizer.OnDataCaptureListener, SeekBar.OnSeekBarChangeListener, CircularSeekBar.OnSeekChangeListener, EasyPermissions.PermissionCallbacks {
 
     @BindView(R.id.myvisualizerview)
     VisualizerView visualizerView;
@@ -55,7 +56,9 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     TextView tvBPM;
 
     @BindView(R.id.seek_bar)
-    SeekBar progressbar;
+    SeekBar seekbar;
+    @BindView(R.id.circular_seekbar)
+    CircularSeekBar progressbar;
 
     @BindView(R.id.preview)
     SurfaceView preview;
@@ -86,10 +89,14 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.READ_EXTERNAL_STORAGE};
 
+    private enum PlayState {
+        PLAY, PAUSE, STOP, DISABLE
+    }
+
+    private boolean allowStorage, allowMic, allowCamera;
     private MediaPlayer mMediaPlayer;
     private Visualizer mVisualizer;
     public float[] intensity = new float[4];
-    public float colorCounter = 0;
     private boolean isSongSelected, isSongPlaying;
     private Handler mHandler = new Handler();
     private Utilities utils;
@@ -99,6 +106,8 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     private boolean hasFlash;
     Camera.Parameters params;
     SurfaceHolder mHolder;
+    private int currentSongPos;
+    private ArrayList<Song> songsList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,6 +116,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
         ButterKnife.bind(this);
         initView();
+
         onAskPermission();
     }
 
@@ -114,35 +124,60 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     public void initView() {
         AdRequest adRequest = new AdRequest.Builder().build();
         adView.loadAd(adRequest);
-        progressbar.setPadding(0, 0, 0, 0);
+
+        utils = new Utilities();
+
+        seekbar.setOnSeekBarChangeListener(this);
+        progressbar.setSeekBarChangeListener(this);
+
+        seekbar.setPadding(0, 0, 0, 0);
+        progressbar.invalidate();
+        progressbar.hideSeekBar();
         useFlash = true;
-        if (!isSongPlaying) {
-            btnPlay.setImageResource(R.drawable.ic_play_disable);
+    }
+
+    @AfterPermissionGranted(REQUEST_CAMERA_MIC_STORAGE)
+    void onAskPermission() {
+        if (EasyPermissions.hasPermissions(this, perms)) {
+            initAudio();
+        } else {
+            EasyPermissions.requestPermissions(this,
+                    getString(R.string.request_permission_camera_record_storage),
+                    REQUEST_CAMERA_MIC_STORAGE, perms);
         }
     }
 
-    private void initEmu() {
-        setVolumeControlStream(AudioManager.STREAM_MUSIC);
-        mMediaPlayer = MediaPlayer.create(this, R.raw.attention);
-        mMediaPlayer.setOnCompletionListener(this);
-        progressbar.setOnSeekBarChangeListener(this);
-        progressbar.setMax(mMediaPlayer.getDuration());
-
-        setupVisualizer();
-        mMediaPlayer.start();
-
-        animRotate();
-    }
 
     private void initAudio() {
-        circleViewWrapper.clearAnimation();
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
-        progressbar.setOnSeekBarChangeListener(this);
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setOnCompletionListener(this);
-        utils = new Utilities();
     }
 
+    private void initCamera() {
+        if (checkFlash()) {
+            hasFlash = true;
+            getCamera();
+
+        } else {
+            hasFlash = false;
+            btnFlash.setImageResource(R.drawable.ic_flash_light_disable);
+            android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(MainActivity.this);
+            alert.setTitle("Error!");
+            alert.setMessage("Your phone does not have the flash!");
+            alert.setPositiveButton("OK", (d, i) -> finish());
+        }
+    }
+
+    private void initVisualizer() {
+        if (mVisualizer == null) {
+            mVisualizer = new Visualizer(mMediaPlayer.getAudioSessionId());
+            mVisualizer.setDataCaptureListener(this, Visualizer.getMaxCaptureRate() / 2, true, false);
+        }
+        mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
+        mVisualizer.setEnabled(true);
+
+    }
     public void animShakeBox() {
         Animation shakeAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.anim_shake);
         soundPlate.setLayerType(View.LAYER_TYPE_HARDWARE, null);
@@ -198,10 +233,31 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         }
     }
 
-    @OnClick(R.id.btn_playback)
-    public void onClickPlay() {
-        if (isSongSelected && isSongPlaying) {
-            mMediaPlayer.pause();
+    @OnClick(R.id.btn_play_next)
+    public void onClickNext() {
+        if (isSongSelected) {
+            if (currentSongPos < (songsList.size() - 1)) {
+                playNewSong(songsList.get(currentSongPos + 1));
+                currentSongPos = currentSongPos + 1;
+            } else {
+                // play first song
+                playNewSong(songsList.get(0));
+                currentSongPos = 0;
+            }
+        }
+    }
+
+    @OnClick(R.id.btn_play_prev)
+    public void onClickPrev() {
+        if (isSongSelected) {
+            if (currentSongPos > 0) {
+                playNewSong(songsList.get(currentSongPos - 1));
+                currentSongPos = currentSongPos - 1;
+            } else {
+                // play last song
+                playNewSong(songsList.get(songsList.size() - 1));
+                currentSongPos = songsList.size() - 1;
+            }
         }
     }
 
@@ -214,10 +270,23 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         startActivity(intent);
     }
 
-
     @OnClick(R.id.btn_about)
     public void onClickAbout() {
         AboutActivity.start(this);
+    }
+
+    @OnClick(R.id.btn_playback)
+    public void onClickPlay() {
+        if (isSongSelected) {
+            if (mMediaPlayer.isPlaying()) {
+                pauseSong();
+            } else if (!mMediaPlayer.isPlaying()) {
+                playSong();
+            }
+        } else {
+            Toast.makeText(this, "please select song first", Toast.LENGTH_SHORT).show();
+            btnPlay.setImageResource(R.drawable.ic_play_disable);
+        }
     }
 
     @OnClick(R.id.btn_browser)
@@ -244,21 +313,23 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         }
     }
 
-    public void playSong(Song song) {
+    public void playNewSong(Song song) {
         try {
-            checkCamera();
-
+            if (mMediaPlayer == null)
+                initAudio();
             mMediaPlayer.reset();
             mMediaPlayer.setDataSource(song.getPath());
             mMediaPlayer.prepare();
-            setupVisualizer();
             mMediaPlayer.start();
             animRotate();
 
+            initVisualizer();
             tvBPM.setText(song.getBitrate());
 
             progressbar.setProgress(0);
-            progressbar.setMax(100);
+            progressbar.setMaxProgress(100);
+            seekbar.setProgress(0);
+            seekbar.setMax(100);
             updateProgressBar();
 
             isSongPlaying = true;
@@ -272,20 +343,18 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         }
     }
 
-    private void checkCamera() {
-        if (checkFlash()) {
-            hasFlash = true;
-            getCamera();
-
-        } else {
-            hasFlash = false;
-            btnFlash.setImageResource(R.drawable.ic_flash_light_disable);
-            android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(MainActivity.this);
-            alert.setTitle("Error!");
-            alert.setMessage("Your phone does not have the flash!");
-            alert.setPositiveButton("OK", (d, i) -> finish());
-        }
+    public void playSong() {
+        mMediaPlayer.start();
+        changePlayBtn(PlayState.PLAY);
+        animRotate();
     }
+
+    public void pauseSong() {
+        mMediaPlayer.pause();
+        changePlayBtn(PlayState.PAUSE);
+        resetanim();
+    }
+
 
     public void updateProgressBar() {
         mHandler.postDelayed(mUpdateTimeTask, 100);
@@ -298,7 +367,9 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             long currentDuration = mMediaPlayer.getCurrentPosition();
 
             int progress = (int) (utils.getProgressPercentage(currentDuration, totalDuration));
+            seekbar.setProgress(progress);
             progressbar.setProgress(progress);
+            progressbar.invalidate();
 
             mHandler.postDelayed(this, 100);
         }
@@ -306,7 +377,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
     private void resetanim() {
         circleViewWrapper.clearAnimation();
-        soundPlate.clearAnimation();
     }
 
 
@@ -341,7 +411,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     protected void onResume() {
         super.onResume();
         if (isSongPlaying && !isSongSelected && mVisualizer != null) {
-            checkCamera();
             mVisualizer.setEnabled(true);
             animRotate();
         }
@@ -359,11 +428,15 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         }
     }
 
-    private void setupVisualizer() {
-        mVisualizer = new Visualizer(mMediaPlayer.getAudioSessionId());
-        mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
-        mVisualizer.setDataCaptureListener(this, Visualizer.getMaxCaptureRate() / 2, true, false);
-        mVisualizer.setEnabled(true);
+
+
+    public void changePlayBtn(PlayState state) {
+        if (state == PlayState.DISABLE)
+            btnPlay.setImageResource(R.drawable.ic_play_disable);
+        else if (state == PlayState.PAUSE)
+            btnPlay.setImageResource(R.drawable.ic_play);
+        else if (state == PlayState.PLAY)
+            btnPlay.setImageResource(R.drawable.ic_pause);
     }
 
 
@@ -376,10 +449,17 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
     @Override
     public void onCompletion(MediaPlayer mp) {
-        isSongPlaying = false;
-        tvBPM.setText(R.string.default_bpm);
-        mVisualizer.setEnabled(false);
-        resetanim();
+
+        if (currentSongPos < (songsList.size() - 1)) {
+            playNewSong(songsList.get(currentSongPos + 1));
+            currentSongPos = currentSongPos + 1;
+
+        } else {
+            // play first song
+            playNewSong(songsList.get(0));
+            currentSongPos = 0;
+
+        }
     }
 
 
@@ -394,13 +474,11 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             intensity[3] = ((float) waveform[3] + 128f) / 256;
 
             if (intensity[3] < 0.5f) {
-                backgroundBeat.setBackgroundColor(ContextCompat.getColor(getApplicationContext(), R.color.bit7));
-                animShakeBox();
+                backgroundBeat.setBackgroundResource(R.drawable.background);
                 if (useFlash)
                     turnOnFlash();
             } else {
-                backgroundBeat.setBackgroundColor(Utils.getColorId(getApplicationContext()));
-                colorCounter += 0.03f;
+                backgroundBeat.setBackgroundColor(utils.getColorId(getApplicationContext()));
                 if (useFlash)
                     turnOffFlash();
             }
@@ -430,30 +508,28 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         updateProgressBar();
     }
 
-    @AfterPermissionGranted(REQUEST_CAMERA_MIC_STORAGE)
-    void onAskPermission() {
-
-        if (EasyPermissions.hasPermissions(this, perms)) {
-            initAudio();
-        } else {
-            EasyPermissions.requestPermissions(this,
-                    getString(R.string.request_permission_camera_record_storage),
-                    REQUEST_CAMERA_MIC_STORAGE, perms);
-        }
-    }
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
+        if (requestCode == AppSettingsDialog.DEFAULT_SETTINGS_REQ_CODE) {
+            Toast.makeText(this, R.string.returned_from_app_settings_to_activity, Toast.LENGTH_SHORT)
+                    .show();
+        }
 
         if (requestCode == REQUEST_PATH) {
             if (resultCode == Activity.RESULT_OK) {
                 Song song = new Song();
                 song.setPath(data.getStringExtra("songPath"));
                 song.setBitrate(data.getStringExtra("songBPM"));
-                playSong(song);
+                currentSongPos = data.getIntExtra("songPosition", 0);
+
+                initCamera();
+
+                if (songsList == null)
+                    songsList = utils.getPlayList();
+
+                playNewSong(song);
                 isSongSelected = true;
             } else {
                 isSongSelected = false;
@@ -470,12 +546,12 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
     @Override
     public void onPermissionsGranted(int requestCode, List<String> perms) {
-        Log.d("TAG", "Permission has been granted");
+
     }
 
     @Override
     public void onPermissionsDenied(int requestCode, List<String> perms) {
-        Log.d("TAG", "Permission has been denied");
+        Log.d("TAG", "onPermissionsDenied:" + requestCode + ":" + perms.size());
         if (EasyPermissions.somePermissionPermanentlyDenied(this, perms)) {
             new AppSettingsDialog.Builder(this).build().show();
         }
@@ -516,4 +592,8 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         }
     }
 
+    @Override
+    public void onProgressChange(CircularSeekBar view, int newProgress) {
+
+    }
 }
