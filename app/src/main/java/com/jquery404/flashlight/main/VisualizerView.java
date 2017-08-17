@@ -115,7 +115,7 @@ public class VisualizerView extends View {
             mPointsLine[i * 4] = i * 4 * mDivisions;
             mPointsLine[i * 4 + 1] = mRect.height() / 2;
             mPointsLine[i * 4 + 2] = i * 4 * mDivisions;
-            mPointsLine[i * 4 + 3] = mRect.height() / 2 - (2 * dbValue - 2 * 45);
+            mPointsLine[i * 4 + 3] = mRect.height() / 2 - (4 * dbValue - 4 * 45);
 
             mPoints[i * 4] = i * 4 * mDivisions;
             mPoints[i * 4 + 1] = mRect.height() / 2;

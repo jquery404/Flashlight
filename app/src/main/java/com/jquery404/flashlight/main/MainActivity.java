@@ -78,6 +78,10 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     AppCompatImageView btnFlash;
     @BindView(R.id.btn_playback)
     AppCompatImageView btnPlay;
+    @BindView(R.id.btn_play_next)
+    AppCompatImageView btnNext;
+    @BindView(R.id.btn_play_prev)
+    AppCompatImageView btnPrev;
 
     @BindView(R.id.adView)
     AdView adView;
@@ -130,6 +134,9 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         seekbar.setOnSeekBarChangeListener(this);
         progressbar.setSeekBarChangeListener(this);
 
+        seekbar.setEnabled(false);
+        progressbar.setEnabled(false);
+
         seekbar.setPadding(0, 0, 0, 0);
         progressbar.invalidate();
         progressbar.hideSeekBar();
@@ -178,6 +185,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         mVisualizer.setEnabled(true);
 
     }
+
     public void animShakeBox() {
         Animation shakeAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.anim_shake);
         soundPlate.setLayerType(View.LAYER_TYPE_HARDWARE, null);
@@ -273,19 +281,20 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     @OnClick(R.id.btn_about)
     public void onClickAbout() {
         AboutActivity.start(this);
+        isSongSelected = false;
     }
 
     @OnClick(R.id.btn_playback)
     public void onClickPlay() {
-        if (isSongSelected) {
+        if (!isSongSelected && !isSongPlaying) {
+            Toast.makeText(this, "please select song first", Toast.LENGTH_SHORT).show();
+            btnPlay.setImageResource(R.drawable.ic_play_disable);
+        } else {
             if (mMediaPlayer.isPlaying()) {
                 pauseSong();
             } else if (!mMediaPlayer.isPlaying()) {
                 playSong();
             }
-        } else {
-            Toast.makeText(this, "please select song first", Toast.LENGTH_SHORT).show();
-            btnPlay.setImageResource(R.drawable.ic_play_disable);
         }
     }
 
@@ -306,10 +315,8 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
                 turnOffFlash();
             }
         } else {
-            android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(MainActivity.this);
-            alert.setTitle("Error!");
-            alert.setMessage("Your phone does not have the flash!");
-            alert.setPositiveButton("OK", (d, i) -> finish());
+            btnFlash.setImageResource(R.drawable.ic_flash_light_disable);
+            Toast.makeText(this, "Your phone does not have the flash!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -330,6 +337,10 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             progressbar.setMaxProgress(100);
             seekbar.setProgress(0);
             seekbar.setMax(100);
+
+            changePlayBtn(PlayState.PLAY);
+            changeNextPrevBtn();
+
             updateProgressBar();
 
             isSongPlaying = true;
@@ -357,6 +368,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
 
     public void updateProgressBar() {
+        seekbar.setEnabled(true);
         mHandler.postDelayed(mUpdateTimeTask, 100);
     }
 
@@ -410,6 +422,7 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     @Override
     protected void onResume() {
         super.onResume();
+
         if (isSongPlaying && !isSongSelected && mVisualizer != null) {
             mVisualizer.setEnabled(true);
             animRotate();
@@ -429,7 +442,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     }
 
 
-
     public void changePlayBtn(PlayState state) {
         if (state == PlayState.DISABLE)
             btnPlay.setImageResource(R.drawable.ic_play_disable);
@@ -437,6 +449,13 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
             btnPlay.setImageResource(R.drawable.ic_play);
         else if (state == PlayState.PLAY)
             btnPlay.setImageResource(R.drawable.ic_pause);
+    }
+
+    public void changeNextPrevBtn() {
+        if (songsList.size() > 0) {
+            btnNext.setImageResource(R.drawable.ic_play_next);
+            btnPrev.setImageResource(R.drawable.ic_play_prev);
+        }
     }
 
 

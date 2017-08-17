@@ -437,7 +437,6 @@ public class CircularSeekBar extends View {
      * the onSeekChange event occurs, that object's appropriate
      * method is invoked.
      *
-     * @see OnSeekChangeEvent
      */
     public interface OnSeekChangeListener {
 
@@ -551,6 +550,7 @@ public class CircularSeekBar extends View {
         float x = event.getX();
         float y = event.getY();
         boolean up = false;
+        if (!isEnabled()) return false;
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 moved(x, y, up);
