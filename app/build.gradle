@@ -8,7 +8,7 @@ android {
         applicationId "com.jquery404.flashlight"
         minSdkVersion 16
         targetSdkVersion 25
-        versionCode 3
+        versionCode 4
         versionName "1.1." + versionCode
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         jackOptions {

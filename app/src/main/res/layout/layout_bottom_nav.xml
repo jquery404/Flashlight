@@ -31,8 +31,6 @@
             android:layout_height="match_parent"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
-            android:layout_toLeftOf="@+id/btn_play"
-            android:layout_toStartOf="@+id/btn_play"
             android:gravity="center|center_vertical">
 
             <LinearLayout
@@ -41,92 +39,105 @@
                 android:layout_alignParentTop="true"
                 android:gravity="center|center_vertical"
                 android:orientation="horizontal"
-                android:weightSum="3">
+                android:weightSum="1">
 
-                <android.support.v7.widget.AppCompatImageView
-                    android:id="@+id/btn_about"
-                    android:layout_width="@dimen/btn_size"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="center"
-                    app:srcCompat="@drawable/ic_about"/>
+                    android:layout_weight=".6"
+                    android:orientation="vertical">
+
+                    <ViewFlipper
+                        android:id="@+id/viewFlipper1"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:paddingLeft="24dp"
+                        android:paddingRight="0dp"
+                        android:autoStart="true"
+                        android:flipInterval="5000">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center_vertical"
+                            android:gravity="center_vertical"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Right Now"
+                                android:textColor="@color/colorVisualizeTop"/>
+
+                            <TextView
+                                android:id="@+id/on_song_title"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:gravity="center_vertical"
+                                android:maxLines="1"
+                                android:scrollHorizontally="true"
+                                android:textColor="#fff"/>
+                        </LinearLayout>
+
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center_vertical"
+                            android:gravity="center_vertical"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Up Next"
+                                android:textColor="@color/colorVisualizeTop"/>
+
+                            <TextView
+                                android:id="@+id/off_song_title"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:ellipsize="end"
+                                android:gravity="center_vertical"
+                                android:maxLines="1"
+                                android:scrollHorizontally="true"
+                                android:textColor="#fff"/>
+                        </LinearLayout>
+                    </ViewFlipper>
+
+                </LinearLayout>
 
                 <android.support.v7.widget.AppCompatImageView
                     android:id="@+id/flash_light"
                     android:layout_width="@dimen/btn_size"
                     android:layout_height="match_parent"
-                    android:layout_weight="1"
+                    android:layout_weight=".2"
                     android:scaleType="center"
                     app:srcCompat="@drawable/ic_flash_light"/>
 
-                <android.support.v7.widget.AppCompatImageView
-                    android:id="@+id/btn_play_prev"
-                    android:layout_width="@dimen/btn_size"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="center"
-                    app:srcCompat="@drawable/ic_play_prev_ds"/>
-            </LinearLayout>
-        </RelativeLayout>
-
-
-        <RelativeLayout
-            android:id="@+id/btn_play"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            android:gravity="center|center_vertical">
-
-            <android.support.v7.widget.AppCompatImageView
-                android:id="@+id/btn_playback"
-                android:layout_width="@dimen/btn_large_size"
-                android:layout_height="match_parent"
-                android:scaleType="fitCenter"
-                app:srcCompat="@drawable/ic_play_disable"/>
-        </RelativeLayout>
-
-
-        <RelativeLayout
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_toEndOf="@+id/btn_play"
-            android:layout_toRightOf="@+id/btn_play"
-            android:gravity="center|center_vertical">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_alignParentTop="true"
-                android:gravity="center|center_vertical"
-                android:orientation="horizontal"
-                android:weightSum="3">
 
                 <android.support.v7.widget.AppCompatImageView
-                    android:id="@+id/btn_play_next"
+                    android:id="@+id/btn_about"
                     android:layout_width="@dimen/btn_size"
                     android:layout_height="match_parent"
-                    android:layout_weight="1"
+                    android:layout_weight=".1"
                     android:scaleType="center"
-                    app:srcCompat="@drawable/ic_play_next_ds"/>
+                    app:srcCompat="@drawable/ic_about"/>
 
-                <android.support.v7.widget.AppCompatImageView
-                    android:id="@+id/btn_browser"
-                    android:layout_width="@dimen/btn_size"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="center"
-                    app:srcCompat="@drawable/ic_music_lib"/>
 
                 <android.support.v7.widget.AppCompatImageView
                     android:id="@+id/btn_facebook"
                     android:layout_width="@dimen/btn_size"
                     android:layout_height="match_parent"
-                    android:layout_weight="1"
+                    android:layout_weight=".1"
                     android:scaleType="center"
                     app:srcCompat="@drawable/ic_facebook"/>
+
             </LinearLayout>
         </RelativeLayout>
+
+
     </RelativeLayout>
 
 

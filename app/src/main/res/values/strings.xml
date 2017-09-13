@@ -31,6 +31,6 @@
     <string name="activity_about_text">The world first android app that turns your phone into disco light machine! Flashlight makes use of your phone\'s internal camera LED lights and microphone to create various lighting effects based on song you are playing. No need for glowsticks, Flashlight is the original disco light and dance light! Just turn on any music and it takes over pulsing to the beat of the music. Turn your home into party mode.\n\n\n\n\u00A9 2017 jQuery404. All rights reserved.</string>
 
     <!-- AdMob ad unit IDs -->
-    <string name="banner_home_footer">ca-app-pub-7875491047514906/7124326070</string>
-    <string name="interstitial_full_screen">ca-app-pub-7875491047514906/8601059277</string>
+    <string name="banner_home_footer">ca-app-pub-7866726697767847/7599006541</string>
+    <string name="interstitial_full_screen">ca-app-pub-7866726697767847/5708050815</string>
 </resources>

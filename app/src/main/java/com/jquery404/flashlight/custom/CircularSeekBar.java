@@ -61,7 +61,7 @@ public class CircularSeekBar extends View {
     /**
      * The width of the progress ring
      */
-    private int barWidth = 5;
+    private int barWidth = 15;
 
     /**
      * The width of the view
@@ -208,7 +208,7 @@ public class CircularSeekBar extends View {
         innerColor = new Paint();
         circleRing = new Paint();
 
-        circleColor.setColor(Color.parseColor("#ff33b5e5")); // Set default
+        circleColor.setColor(Color.parseColor("#fff61a53")); // Set default
         // progress
         // color to holo
         // blue.

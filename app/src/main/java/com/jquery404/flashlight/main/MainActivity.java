@@ -54,6 +54,10 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
     @BindView(R.id.bpm)
     TextView tvBPM;
+    @BindView(R.id.on_song_title)
+    TextView tvOnSong;
+    @BindView(R.id.off_song_title)
+    TextView tvOffSong;
 
     @BindView(R.id.seek_bar)
     SeekBar seekbar;
@@ -183,7 +187,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         }
         mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
         mVisualizer.setEnabled(true);
-
     }
 
     public void animShakeBox() {
@@ -332,6 +335,14 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
             initVisualizer();
             tvBPM.setText(song.getBitrate());
+
+            tvOnSong.setText(songsList.get(currentSongPos).getName());
+            if (currentSongPos < (songsList.size() - 1)) {
+                tvOffSong.setText(songsList.get(currentSongPos + 1).getName());
+            } else {
+                tvOffSong.setText(songsList.get(0).getName());
+            }
+
 
             progressbar.setProgress(0);
             progressbar.setMaxProgress(100);

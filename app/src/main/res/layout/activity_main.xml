@@ -3,6 +3,7 @@
     android:id="@+id/background_beat"
     xmlns:ads="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/background"
@@ -11,10 +12,8 @@
 
     <RelativeLayout
         android:id="@+id/waveview"
-        android:layout_marginBottom="50dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/view">
+        android:layout_height="100dp">
 
         <SurfaceView
             android:id="@+id/preview"
@@ -36,33 +35,65 @@
         android:layout_height="0dp"
         android:layout_centerVertical="true"/>
 
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:background="#000000"
+        ads:adSize="SMART_BANNER"
+        ads:adUnitId="@string/banner_home_footer"/>
+
+    <RelativeLayout
+        android:id="@+id/bottomNavWrapper"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:layout_above="@id/adView"
+        android:background="@color/colorPrimaryDarkBottom">
+
+        <include
+            layout="@layout/layout_bottom_nav"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </RelativeLayout>
+
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/adView">
+        android:layout_above="@id/bottomNavWrapper"
+        android:layout_below="@+id/waveview">
 
-
-        <View
-            android:id="@+id/soundplate"
-            android:layout_width="150dp"
-            android:layout_height="150dp"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:background="@drawable/soundplate"/>
 
         <com.jquery404.flashlight.custom.CircularSeekBar
             android:id="@+id/circular_seekbar"
-            android:layout_width="110dp"
-            android:layout_height="110dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"/>
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"/>
+
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
+            android:layout_height="match_parent"
             android:layout_alignParentTop="true">
+
+            <ImageView
+                android:id="@+id/soundplate"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                android:layout_marginLeft="24dp"
+                android:layout_marginRight="24dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/soundplate"/>
+
 
             <RelativeLayout
                 android:id="@+id/circleview_wrapper"
@@ -95,37 +126,58 @@
                     android:text="@string/bpm_title"
                     android:textColor="@color/colorBottomHalfCircle"
                     android:textSize="12sp"/>
+
+
+
             </RelativeLayout>
+            <android.support.v7.widget.AppCompatImageView
+                android:id="@+id/btn_playback"
+                android:layout_width="@dimen/btn_large_size"
+                android:layout_height="@dimen/btn_large_size"
+                android:scaleType="fitCenter"
+                android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
+                app:srcCompat="@drawable/ic_play_disable"/>
 
-
-            <RelativeLayout
-                android:id="@+id/relativeLayout"
+            <LinearLayout
+                android:id="@+id/library_bar"
                 android:layout_width="match_parent"
-                android:layout_height="70dp"
-                android:layout_alignParentBottom="true"
-                android:background="@color/colorPrimaryDarkBottom">
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_below="@+id/circleview_wrapper"
+                android:layout_marginTop="16dp"
+                android:gravity="center|center_vertical"
+                android:orientation="horizontal"
+                android:weightSum="7">
 
-                <include
-                    layout="@layout/layout_bottom_nav"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"/>
+                <android.support.v7.widget.AppCompatImageView
+                    android:id="@+id/btn_play_prev"
+                    android:layout_width="@dimen/btn_size"
+                    android:layout_height="@dimen/btn_size"
+                    android:layout_weight="1"
+                    android:scaleType="center"
+                    app:srcCompat="@drawable/ic_play_prev_ds"/>
 
-            </RelativeLayout>
+                <android.support.v7.widget.AppCompatImageView
+                    android:id="@+id/btn_browser"
+                    android:layout_width="@dimen/btn_large_size"
+                    android:layout_height="@dimen/btn_large_size"
+                    android:layout_weight="1"
+                    android:scaleType="center"
+                    app:srcCompat="@drawable/ic_music_lib"/>
 
+
+                <android.support.v7.widget.AppCompatImageView
+                    android:id="@+id/btn_play_next"
+                    android:layout_width="@dimen/btn_size"
+                    android:layout_height="@dimen/btn_size"
+                    android:layout_weight="1"
+                    android:scaleType="center"
+                    app:srcCompat="@drawable/ic_play_next_ds"/>
+
+            </LinearLayout>
         </RelativeLayout>
     </RelativeLayout>
-
-
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:background="#000000"
-        ads:adSize="SMART_BANNER"
-        ads:adUnitId="@string/banner_home_footer"/>
-
 
 </RelativeLayout>
