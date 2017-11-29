@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -9,22 +8,8 @@
     tools:showIn="@layout/activity_main">
 
     <RelativeLayout
-        android:id="@+id/seekbar_wrap"
         android:layout_width="match_parent"
-        android:layout_height="10dp">
-
-        <SeekBar
-            android:id="@+id/seek_bar"
-            style="@style/flashlightSeekbar"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/seekbar_wrap">
+        android:layout_height="wrap_content">
 
         <RelativeLayout
             android:layout_width="wrap_content"
@@ -41,98 +26,40 @@
                 android:orientation="horizontal"
                 android:weightSum="1">
 
-                <LinearLayout
-                    android:layout_width="0dp"
+                <android.support.v7.widget.AppCompatImageView
+                    android:id="@+id/btn_browser"
+                    android:layout_width="@dimen/btn_large_size"
                     android:layout_height="match_parent"
-                    android:layout_weight=".6"
-                    android:orientation="vertical">
+                    android:layout_weight="0.2"
+                    android:scaleType="center"
+                    app:srcCompat="@drawable/ic_music_lib" />
 
-                    <ViewFlipper
-                        android:id="@+id/viewFlipper1"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:paddingLeft="24dp"
-                        android:paddingRight="0dp"
-                        android:autoStart="true"
-                        android:flipInterval="5000">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_gravity="center_vertical"
-                            android:gravity="center_vertical"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Right Now"
-                                android:textColor="@color/colorVisualizeTop"/>
-
-                            <TextView
-                                android:id="@+id/on_song_title"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:ellipsize="end"
-                                android:gravity="center_vertical"
-                                android:maxLines="1"
-                                android:scrollHorizontally="true"
-                                android:textColor="#fff"/>
-                        </LinearLayout>
-
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_gravity="center_vertical"
-                            android:gravity="center_vertical"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Up Next"
-                                android:textColor="@color/colorVisualizeTop"/>
-
-                            <TextView
-                                android:id="@+id/off_song_title"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:ellipsize="end"
-                                android:gravity="center_vertical"
-                                android:maxLines="1"
-                                android:scrollHorizontally="true"
-                                android:textColor="#fff"/>
-                        </LinearLayout>
-                    </ViewFlipper>
-
-                </LinearLayout>
 
                 <android.support.v7.widget.AppCompatImageView
                     android:id="@+id/flash_light"
-                    android:layout_width="@dimen/btn_size"
+                    android:layout_width="@dimen/btn_large_size"
                     android:layout_height="match_parent"
-                    android:layout_weight=".2"
+                    android:layout_weight="0.2"
                     android:scaleType="center"
-                    app:srcCompat="@drawable/ic_flash_light"/>
+                    app:srcCompat="@drawable/ic_flash_light" />
 
 
                 <android.support.v7.widget.AppCompatImageView
                     android:id="@+id/btn_about"
-                    android:layout_width="@dimen/btn_size"
+                    android:layout_width="@dimen/btn_large_size"
                     android:layout_height="match_parent"
-                    android:layout_weight=".1"
+                    android:layout_weight=".2"
                     android:scaleType="center"
-                    app:srcCompat="@drawable/ic_about"/>
+                    app:srcCompat="@drawable/ic_about" />
 
 
                 <android.support.v7.widget.AppCompatImageView
                     android:id="@+id/btn_facebook"
-                    android:layout_width="@dimen/btn_size"
+                    android:layout_width="@dimen/btn_large_size"
                     android:layout_height="match_parent"
-                    android:layout_weight=".1"
+                    android:layout_weight=".2"
                     android:scaleType="center"
-                    app:srcCompat="@drawable/ic_facebook"/>
+                    app:srcCompat="@drawable/ic_facebook" />
 
             </LinearLayout>
         </RelativeLayout>

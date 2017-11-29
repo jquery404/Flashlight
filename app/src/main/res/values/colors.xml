@@ -2,10 +2,11 @@
 <resources>
     <color name="colorPrimary">#2e2e2e</color>
     <color name="colorPrimaryDark">#121212</color>
-    <color name="colorPrimaryDarkBottom">#22121212</color>
+    <color name="colorPrimaryDarkBottom">#00121212</color>
     <color name="colorSecondary">#232323</color>
     <color name="colorSecondaryDark">#282828</color>
-    <color name="colorTopHalfCircle">#f61a53</color>
+    <color name="colorTopHalfCircle">#e52337</color>
+    <color name="indicatorColor">#e52337</color>
     <color name="colorBottomHalfCircle">#000000</color>
 
     <color name="colorVisualizeHeader">#212026</color>

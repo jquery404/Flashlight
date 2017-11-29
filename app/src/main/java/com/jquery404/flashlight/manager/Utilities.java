@@ -17,8 +17,6 @@ import java.util.ArrayList;
  */
 
 public class Utilities {
-    private ArrayList<Song> songsList = new ArrayList<>();
-
 
     public String milliSecondsToTimer(long milliseconds) {
         String finalTimerString = "";
@@ -88,69 +86,5 @@ public class Utilities {
             i = R.color.bit5;
         }
         return ContextCompat.getColor(context, i);
-    }
-
-
-    public ArrayList<Song> getPlayList() {
-        File home = Environment.getExternalStorageDirectory();
-        File[] listFiles = home.listFiles();
-        if (listFiles != null && listFiles.length > 0) {
-            for (File file : listFiles) {
-                if (file.isDirectory()) {
-                    scanDirectory(file);
-                } else {
-                    addSongToList(file);
-                }
-            }
-        }
-
-        return songsList;
-    }
-
-    private void scanDirectory(File directory) {
-        if (directory != null) {
-            File[] listFiles = directory.listFiles();
-            if (listFiles != null && listFiles.length > 0) {
-                for (File file : listFiles) {
-                    if (file.isDirectory()) {
-                        scanDirectory(file);
-                    } else {
-                        addSongToList(file);
-                    }
-                }
-            }
-        }
-    }
-
-
-    private void addSongToList(File song) {
-        String out = "";
-
-        if (song.getName().endsWith(".ogg") ||
-                song.getName().endsWith(".mp3") ||
-                song.getName().endsWith(".MP3")) {
-            MediaMetadataRetriever mmr = new MediaMetadataRetriever();
-            mmr.setDataSource(song.getPath());
-            String title = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE);
-            String bitrate = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE);
-            String duration = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-            String artist = mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_ARTIST);
-            if (artist == null)
-                artist = "Unknown";
-            if (title == null)
-                title = song.getName().substring(0, (song.getName().length() - 4));
-
-            long dur = Long.parseLong(duration);
-            String seconds = String.valueOf((dur % 60000) / 1000);
-            String minutes = String.valueOf(dur / 60000);
-            if (seconds.length() == 1) {
-                out = ("0" + minutes + ":0" + seconds);
-            } else {
-                out = ("0" + minutes + ":" + seconds);
-            }
-            Song mSong = new Song(title, song.getPath(), "" + (Integer.parseInt(bitrate)) / 1000, out, artist);
-
-            songsList.add(mSong);
-        }
     }
 }

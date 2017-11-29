@@ -21,7 +21,7 @@
     <!-- Playlist activity -->
     <string name="playlist_title">Playlists</string>
     <string name="default_bpm">000</string>
-    <string name="bpm_title">KBPS</string>
+    <string name="bpm_title">%1$s KBPS</string>
     <string name="unknown">Unknown</string>
 
     <!-- Activity titles -->

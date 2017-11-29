@@ -10,7 +10,7 @@
         android:scaleX="0.050000"
         android:scaleY="-0.050000">
         <path
-            android:fillColor="#ffffff"
+            android:fillColor="#e52337"
             android:strokeWidth="1"
             android:pathData="M370 1140 c-7 -11 -38 -20 -70 -20 -103 0 -122 -77 -115 -481 l5 -349 105 -6 c80
 -5 110 -15 126 -46 80 -149 358 -149 438 0 16 31 46 41 126 46 l105 6 5 349 c5 284

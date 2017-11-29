@@ -1,39 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    android:id="@+id/background_beat"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:ads="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/background_beat"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/background"
     android:keepScreenOn="true"
     android:orientation="vertical">
 
-    <RelativeLayout
-        android:id="@+id/waveview"
-        android:layout_width="match_parent"
-        android:layout_height="100dp">
 
-        <SurfaceView
-            android:id="@+id/preview"
-            android:layout_width="1dip"
-            android:layout_height="1dip"
-            android:background="#000"/>
-
-        <com.jquery404.flashlight.main.VisualizerView
-            android:id="@+id/myvisualizerview"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-
-
-    </RelativeLayout>
 
     <View
         android:id="@+id/view"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_centerVertical="true"/>
+        android:layout_centerVertical="true" />
 
     <com.google.android.gms.ads.AdView
         android:id="@+id/adView"
@@ -44,38 +26,73 @@
         android:layout_alignParentStart="true"
         android:background="#000000"
         ads:adSize="SMART_BANNER"
-        ads:adUnitId="@string/banner_home_footer"/>
+        ads:adUnitId="@string/banner_home_footer" />
 
     <RelativeLayout
         android:id="@+id/bottomNavWrapper"
         android:layout_width="match_parent"
         android:layout_height="70dp"
-        android:layout_above="@id/adView"
-        android:background="@color/colorPrimaryDarkBottom">
+        android:layout_above="@id/adView">
 
         <include
             layout="@layout/layout_bottom_nav"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent" />
 
     </RelativeLayout>
 
 
     <RelativeLayout
+        android:layout_above="@id/bottomNavWrapper"
+        android:id="@+id/waveview"
+        android:layout_width="match_parent"
+        android:layout_height="100dp">
+
+        <SurfaceView
+            android:id="@+id/preview"
+            android:layout_width="1dip"
+            android:layout_height="1dip"
+            android:background="#000" />
+
+        <com.jquery404.flashlight.main.VisualizerView
+            android:id="@+id/myvisualizerview"
+            android:layout_width="match_parent"
+            android:layout_height="100dp" />
+
+
+    </RelativeLayout>
+
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@id/bottomNavWrapper"
-        android:layout_below="@+id/waveview">
+        android:layout_above="@+id/waveview"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
 
-
-        <com.jquery404.flashlight.custom.CircularSeekBar
-            android:id="@+id/circular_seekbar"
+        <com.jquery404.flashlight.main.CircularVisualizerView
+            android:id="@+id/mycricularvisualizer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp"/>
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
+
+
+        <com.sdsmdg.harjot.crollerTest.Croller
+            android:id="@+id/croller"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            app:back_circle_color="#22ffffff"
+            app:indicator_color="@color/indicatorColor"
+            app:indicator_width="2"
+            app:is_continuous="false"
+            app:main_circle_color="@android:color/transparent"
+            app:max="100"
+            app:min="0"
+            app:progress_primary_color="@color/colorTopHalfCircle"
+            app:progress_secondary_color="#342459"
+            app:start_offset="45" />
 
 
         <RelativeLayout
@@ -92,7 +109,8 @@
                 android:layout_marginLeft="24dp"
                 android:layout_marginRight="24dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/soundplate"/>
+                android:src="@drawable/soundplate"
+                android:visibility="gone" />
 
 
             <RelativeLayout
@@ -102,82 +120,97 @@
                 android:layout_centerHorizontal="true"
                 android:layout_centerVertical="true">
 
-
                 <com.jquery404.flashlight.custom.CircleView
                     android:id="@+id/circleview"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"/>
+                    android:layout_height="match_parent"
+                    android:visibility="gone"/>
+
+                <TextView
+                    android:id="@+id/songtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:layout_marginTop="5dp"
+                    android:gravity="center|center_vertical"
+                    android:textColor="@color/colorTopHalfCircle"
+                    android:textSize="24sp" />
 
                 <TextView
                     android:id="@+id/bpm"
                     android:layout_width="match_parent"
                     android:layout_height="50dp"
-                    android:layout_marginTop="5dp"
-                    android:gravity="center|center_vertical"
-                    android:text="@string/default_bpm"
-                    android:textColor="@color/colorTopHalfCircle"
-                    android:textSize="24sp"/>
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="50dp"
                     android:layout_marginTop="40dp"
                     android:gravity="center|center_vertical"
-                    android:text="@string/bpm_title"
                     android:textColor="@color/colorBottomHalfCircle"
-                    android:textSize="12sp"/>
-
+                    android:textSize="12sp" />
 
 
             </RelativeLayout>
+
+        </RelativeLayout>
+
+        <LinearLayout
+            android:id="@+id/library_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_below="@id/croller"
+            android:layout_marginTop="-40dp"
+            android:gravity="center|center_vertical"
+            android:orientation="horizontal"
+            android:weightSum="7">
+
+            <android.support.v7.widget.AppCompatImageView
+                android:id="@+id/btn_play_prev"
+                android:layout_width="@dimen/btn_size"
+                android:layout_height="@dimen/btn_size"
+                android:layout_marginTop="-10dp"
+                android:layout_weight="1"
+                android:scaleType="center"
+                app:srcCompat="@drawable/ic_play_prev_ds" />
+
             <android.support.v7.widget.AppCompatImageView
                 android:id="@+id/btn_playback"
                 android:layout_width="@dimen/btn_large_size"
                 android:layout_height="@dimen/btn_large_size"
-                android:scaleType="fitCenter"
-                android:layout_centerHorizontal="true"
-                android:layout_centerVertical="true"
-                app:srcCompat="@drawable/ic_play_disable"/>
-
-            <LinearLayout
-                android:id="@+id/library_bar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true"
-                android:layout_below="@+id/circleview_wrapper"
-                android:layout_marginTop="16dp"
-                android:gravity="center|center_vertical"
-                android:orientation="horizontal"
-                android:weightSum="7">
-
-                <android.support.v7.widget.AppCompatImageView
-                    android:id="@+id/btn_play_prev"
-                    android:layout_width="@dimen/btn_size"
-                    android:layout_height="@dimen/btn_size"
-                    android:layout_weight="1"
-                    android:scaleType="center"
-                    app:srcCompat="@drawable/ic_play_prev_ds"/>
-
-                <android.support.v7.widget.AppCompatImageView
-                    android:id="@+id/btn_browser"
-                    android:layout_width="@dimen/btn_large_size"
-                    android:layout_height="@dimen/btn_large_size"
-                    android:layout_weight="1"
-                    android:scaleType="center"
-                    app:srcCompat="@drawable/ic_music_lib"/>
+                android:layout_marginTop="5dp"
+                android:layout_weight="1"
+                android:scaleType="center"
+                app:srcCompat="@drawable/ic_play_disable" />
 
 
-                <android.support.v7.widget.AppCompatImageView
-                    android:id="@+id/btn_play_next"
-                    android:layout_width="@dimen/btn_size"
-                    android:layout_height="@dimen/btn_size"
-                    android:layout_weight="1"
-                    android:scaleType="center"
-                    app:srcCompat="@drawable/ic_play_next_ds"/>
+            <android.support.v7.widget.AppCompatImageView
+                android:id="@+id/btn_play_next"
+                android:layout_width="@dimen/btn_size"
+                android:layout_height="@dimen/btn_size"
+                android:layout_marginTop="-10dp"
+                android:layout_weight="1"
+                android:scaleType="center"
+                app:srcCompat="@drawable/ic_play_next_ds" />
 
-            </LinearLayout>
-        </RelativeLayout>
+        </LinearLayout>
     </RelativeLayout>
+
+
+
+    <FrameLayout
+        android:id="@+id/progressBarm"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99000000"
+        android:visibility="gone">
+
+        <ProgressBar
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:indeterminateDrawable="@drawable/progressbar_circular"
+            android:visibility="visible" />
+
+    </FrameLayout>
+
 
 </RelativeLayout>

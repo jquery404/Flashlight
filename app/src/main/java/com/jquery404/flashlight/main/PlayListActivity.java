@@ -35,13 +35,13 @@ public class PlayListActivity extends Activity {
 
         ButterKnife.bind(this);
         Utilities utilities = new Utilities();
-        ArrayList<Song> songsList = utilities.getPlayList();
-        if (songsList != null) {
+        //ArrayList<Song> songsList = utilities.getPlayList();
+        /*if (songsList != null) {
             recycler_playlist.setLayoutManager(new LinearLayoutManager(this));
             RecyclerView.Adapter adapter = new PlaylistAdapter(this, songsList);
             recycler_playlist.setAdapter(adapter);
             recycler_playlist.setNestedScrollingEnabled(false);
-        }
+        }*/
 
     }
 

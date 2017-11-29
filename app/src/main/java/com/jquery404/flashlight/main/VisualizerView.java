@@ -52,7 +52,7 @@ public class VisualizerView extends View {
         mBytes = null;
         mDownPaint.setStrokeWidth(8f);
         mDownPaint.setAntiAlias(true);
-        mDownPaint.setColor(ContextCompat.getColor(context, R.color.colorVisualizeBottom));
+        mDownPaint.setColor(ContextCompat.getColor(context, R.color.bit3));
 
         mForePaint.setStrokeWidth(8f);
         mForePaint.setAntiAlias(true);

@@ -48,7 +48,7 @@ public class CircleView extends View {
 
         canvas.drawCircle(centerX, centerY, radius, _paint);
         rectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius);
-        canvas.drawArc(rectF, 0, 180, true, _paintCenter);
+        canvas.drawArc(rectF, 0, 180, false, _paintCenter);
     }
 
 }
