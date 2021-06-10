@@ -5,9 +5,10 @@ import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
+
+import androidx.core.content.ContextCompat;
 
 import com.jquery404.flashlight.R;
 
@@ -17,16 +18,15 @@ import com.jquery404.flashlight.R;
 
 public class VisualizerView extends View {
 
-    private byte[] mBytes, mFFTBytes;
-    private double dbAmp;
+    private byte[] mBytes;
     private float[] mPoints, mPointsLine;
-    private Rect mRect = new Rect();
-    private Paint mForePaint = new Paint();
-    private Paint mDownPaint = new Paint();
-    private Context context;
-    private float amplitude = 0;
+    private final Rect mRect = new Rect();
+    private final Paint mForePaint = new Paint();
+    private final Paint mDownPaint = new Paint();
+    private final Context context;
+    private final float amplitude = 0;
     boolean mTop = false;
-    private float colorCounter = 0;
+    private final float colorCounter = 0;
     private LinearGradient gradientColor;
 
 
@@ -66,8 +66,7 @@ public class VisualizerView extends View {
     }
 
     public void updateVisualizerFFT(byte[] bytes) {
-        dbAmp = computedbAmp(bytes);
-        mFFTBytes = bytes;
+        double dbAmp = computedbAmp(bytes);
         invalidate();
     }
 

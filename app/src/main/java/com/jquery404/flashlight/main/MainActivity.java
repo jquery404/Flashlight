@@ -15,21 +15,19 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.AppCompatImageView;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.InterstitialAd;
+import androidx.annotation.NonNull;
+
+import com.jquery404.flashlight.BaseCompatActivity;
 import com.jquery404.flashlight.R;
 import com.jquery404.flashlight.adapter.Song;
 import com.jquery404.flashlight.custom.AboutDialog;
@@ -54,6 +52,7 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 /**
  * Created by Faisal on 6/30/17.
+ * updated on 6/10/21
  */
 
 public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Callback, MediaPlayer.OnCompletionListener,
@@ -89,16 +88,13 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     View progressBar;
 
     @BindView(R.id.flash_light)
-    AppCompatImageView btnFlash;
+    ImageView btnFlash;
     @BindView(R.id.btn_playback)
-    AppCompatImageView btnPlay;
+    ImageView btnPlay;
     @BindView(R.id.btn_play_next)
-    AppCompatImageView btnNext;
+    ImageView btnNext;
     @BindView(R.id.btn_play_prev)
-    AppCompatImageView btnPrev;
-
-    @BindView(R.id.adView)
-    AdView adView;
+    ImageView btnPrev;
 
     private static final int REQUEST_PATH = 121;
     private static final int REQUEST_CAMERA_MIC_STORAGE = 122;
@@ -112,7 +108,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         PLAY, PAUSE, STOP, DISABLE
     }
 
-    private InterstitialAd mInterstitialAd;
     private boolean allowStorage, allowMic, allowCamera;
     private MediaPlayer mMediaPlayer;
     private Visualizer mVisualizer;
@@ -145,8 +140,6 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
 
 
     public void initView() {
-        AdRequest adRequest = new AdRequest.Builder().build();
-        adView.loadAd(adRequest);
 
         utils = new Utilities();
         songManager = new SongManager();
@@ -214,21 +207,11 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
     }
 
     private void initInterstitialAd() {
-        mInterstitialAd = new InterstitialAd(this);
-        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_full_screen));
-        AdRequest intAdRequest = new AdRequest.Builder().build();
-        mInterstitialAd.loadAd(intAdRequest);
-        mInterstitialAd.setAdListener(new AdListener() {
-            public void onAdLoaded() {
-                showInterstitial();
-            }
-        });
+
     }
 
     private void showInterstitial() {
-        if (mInterstitialAd.isLoaded()) {
-            mInterstitialAd.show();
-        }
+
     }
 
     public void animShakeBox() {

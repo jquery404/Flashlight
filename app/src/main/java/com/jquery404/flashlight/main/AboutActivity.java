@@ -1,14 +1,12 @@
 package com.jquery404.flashlight.main;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.InterstitialAd;
-import com.jquery404.flashlight.BuildConfig;
+import com.jquery404.flashlight.BaseCompatActivity;
 import com.jquery404.flashlight.R;
 
 import butterknife.BindView;
@@ -20,11 +18,10 @@ import butterknife.OnClick;
  */
 
 public class AboutActivity extends BaseCompatActivity {
+    @SuppressLint("NonConstantResourceId")
     @BindView(R.id.app_version)
     TextView tvVersion;
 
-
-    private InterstitialAd mInterstitialAd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,23 +33,11 @@ public class AboutActivity extends BaseCompatActivity {
     }
 
     private void initViews() {
-        tvVersion.setText(getString(R.string.app_name) + " " + BuildConfig.VERSION_NAME);
 
-        mInterstitialAd = new InterstitialAd(this);
-        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_full_screen));
-        AdRequest intAdRequest = new AdRequest.Builder().build();
-        mInterstitialAd.loadAd(intAdRequest);
-        mInterstitialAd.setAdListener(new AdListener() {
-            public void onAdLoaded() {
-                showInterstitial();
-            }
-        });
     }
 
     private void showInterstitial() {
-        if (mInterstitialAd.isLoaded()) {
-            mInterstitialAd.show();
-        }
+
     }
 
     public static void start(Context context) {
@@ -61,6 +46,7 @@ public class AboutActivity extends BaseCompatActivity {
         context.startActivity(launchIntent);
     }
 
+    @SuppressLint("NonConstantResourceId")
     @OnClick(R.id.btn_close)
     public void onClickClose() {
         finish();

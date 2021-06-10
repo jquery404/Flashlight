@@ -2,7 +2,8 @@ package com.jquery404.flashlight.main;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.jquery404.flashlight.R;
 
@@ -19,10 +20,7 @@ public class SplashActivity extends AppCompatActivity {
         setContentView(R.layout.activity_splash);
 
         Handler handler = new Handler();
-        handler.postDelayed(
-                () -> {
-                    loadCompassApp();
-                }, 1000);
+        handler.postDelayed(this::loadCompassApp, 1000);
     }
 
     private void loadCompassApp() {

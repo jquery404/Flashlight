@@ -4,9 +4,10 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.RectF;
-import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
+
+import androidx.core.content.ContextCompat;
 
 import com.jquery404.flashlight.R;
 
@@ -38,13 +39,13 @@ public class CircleView extends View {
 
     @Override
     protected void onDraw(final Canvas canvas) {
-        height = canvas.getHeight();
-        width = canvas.getWidth();
+        height = getHeight();
+        width = getWidth();
 
         radius = width > height ? height * 0.5F : width * 0.5F;
 
-        centerX = canvas.getWidth() * 0.5F;
-        centerY = canvas.getHeight() * 0.5F;
+        centerX = getWidth() * 0.5F;
+        centerY = getHeight() * 0.5F;
 
         canvas.drawCircle(centerX, centerY, radius, _paint);
         rectF.set(centerX - radius, centerY - radius, centerX + radius, centerY + radius);

@@ -1,6 +1,7 @@
-package com.jquery404.flashlight.main;
+package com.jquery404.flashlight;
 
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 /**
  * Created by Faisal on 6/30/17.

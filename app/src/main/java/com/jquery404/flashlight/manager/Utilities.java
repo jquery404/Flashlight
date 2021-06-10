@@ -2,15 +2,10 @@ package com.jquery404.flashlight.manager;
 
 import android.content.Context;
 import android.graphics.Color;
-import android.media.MediaMetadataRetriever;
-import android.os.Environment;
-import android.support.v4.content.ContextCompat;
+
+import androidx.core.content.ContextCompat;
 
 import com.jquery404.flashlight.R;
-import com.jquery404.flashlight.adapter.Song;
-
-import java.io.File;
-import java.util.ArrayList;
 
 /**
  * Created by vision on 7/24/2017.
@@ -46,7 +41,7 @@ public class Utilities {
 
 
     public int getProgressPercentage(long currentDuration, long totalDuration) {
-        Double percentage = (double) 0;
+        double percentage = (double) 0;
 
         long currentSeconds = (int) (currentDuration / 1000);
         long totalSeconds = (int) (totalDuration / 1000);
@@ -55,7 +50,7 @@ public class Utilities {
         percentage = (((double) currentSeconds) / totalSeconds) * 100;
 
         // return percentage
-        return percentage.intValue();
+        return (int) percentage;
     }
 
 

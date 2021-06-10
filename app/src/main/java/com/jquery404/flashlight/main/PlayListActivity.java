@@ -3,8 +3,9 @@ package com.jquery404.flashlight.main;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+
+
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.jquery404.flashlight.R;
 import com.jquery404.flashlight.adapter.PlaylistAdapter;

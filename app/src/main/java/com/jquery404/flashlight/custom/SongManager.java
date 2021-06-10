@@ -9,7 +9,6 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.jquery404.flashlight.adapter.Song;
-import com.jquery404.flashlight.main.MainActivity;
 
 import java.io.File;
 import java.util.ArrayList;
