@@ -96,7 +96,7 @@ public class CircularVisualizerView extends View {
 
     private void drawBlob(Canvas canvas) {
         mForePaint.setStyle(Paint.Style.FILL);
-        mForePaint.setColor(Color.parseColor("#00BCD4")); // Cyan
+        mForePaint.setColor(Color.parseColor("#00BCD4"));
         mForePaint.setAlpha(180);
 
         mRect.set(0, 0, getWidth(), getHeight());
@@ -165,8 +165,6 @@ public class CircularVisualizerView extends View {
         double cX = rect.width() / 2;
         double cY = rect.height() / 2;
         double angle = (cartesian[0]) * 2 * Math.PI;
-        /*double radius = (((rect.width() / 2) * (1 - aggresive) +
-                aggresive * cartesian[1] / 2) * (1.2 + Math.sin(modulation)) / 2.2);*/
         double radius = ((rect.width() / 2) * (1 - aggresive) + aggresive * cartesian[1] / 2);
         float[] out = {
                 (float) (cX + radius * Math.sin(angle)),

@@ -16,7 +16,6 @@
         android:layout_height="0dp"
         android:layout_centerVertical="true" />
 
-    <!-- Top Header Info -->
     <RelativeLayout
         android:id="@+id/header_info"
         android:layout_width="match_parent"
