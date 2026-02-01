@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="design_textinput_error_color_light">@android:color/holo_red_dark</color>
     <color name="colorPrimary">#2e2e2e</color>
     <color name="colorPrimaryDark">#121212</color>
     <color name="colorPrimaryDarkBottom">#00121212</color>

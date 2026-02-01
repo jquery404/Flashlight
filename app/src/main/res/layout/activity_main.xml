@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:ads="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/background_beat"
     android:layout_width="match_parent"
@@ -17,22 +16,66 @@
         android:layout_height="0dp"
         android:layout_centerVertical="true" />
 
-    <com.google.android.gms.ads.AdView
-        android:id="@+id/adView"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:background="#000000"
-        ads:adSize="SMART_BANNER"
-        ads:adUnitId="@string/banner_home_footer" />
+    <!-- Top Header Info -->
+    <RelativeLayout
+        android:id="@+id/header_info"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_marginTop="20dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/album_art_card"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            android:layout_centerVertical="true">
+            <ImageView
+                android:id="@+id/album_art"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/soundplate" />
+        </androidx.cardview.widget.CardView>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/album_art_card"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="15dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tv_header_song_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Song name"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tv_header_artist_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Artist name"
+                android:textColor="#AAAAAA"
+                android:textSize="14sp"
+                android:singleLine="true"
+                android:ellipsize="end" />
+        </LinearLayout>
+    </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/bottomNavWrapper"
         android:layout_width="match_parent"
         android:layout_height="70dp"
-        android:layout_above="@id/adView">
+        android:layout_alignParentBottom="true">
 
         <include
             layout="@layout/layout_bottom_nav"
@@ -64,8 +107,9 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_above="@+id/waveview"
+        android:layout_below="@+id/header_info"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true">
 
@@ -78,21 +122,12 @@
             android:layout_alignParentStart="true" />
 
 
-        <com.sdsmdg.harjot.crollerTest.Croller
+        <com.jquery404.flashlight.custom.DotCircularProgressBar
             android:id="@+id/croller"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="280dp"
+            android:layout_height="280dp"
             android:layout_centerInParent="true"
-            app:back_circle_color="#22ffffff"
-            app:indicator_color="@color/indicatorColor"
-            app:indicator_width="2"
-            app:is_continuous="false"
-            app:main_circle_color="@android:color/transparent"
-            app:max="100"
-            app:min="0"
-            app:progress_primary_color="@color/colorTopHalfCircle"
-            app:progress_secondary_color="#342459"
-            app:start_offset="45" />
+            android:visibility="visible" />
 
 
         <RelativeLayout
@@ -115,8 +150,8 @@
 
             <RelativeLayout
                 android:id="@+id/circleview_wrapper"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
+                android:layout_width="120dp"
+                android:layout_height="120dp"
                 android:layout_centerHorizontal="true"
                 android:layout_centerVertical="true">
 
@@ -124,7 +159,7 @@
                     android:id="@+id/circleview"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:visibility="gone"/>
+                    android:visibility="visible"/>
 
                 <TextView
                     android:id="@+id/songtitle"
@@ -153,41 +188,33 @@
             android:id="@+id/library_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true"
-            android:layout_below="@id/croller"
-            android:layout_marginTop="-40dp"
-            android:gravity="center|center_vertical"
-            android:orientation="horizontal"
-            android:weightSum="7">
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="20dp"
+            android:gravity="center"
+            android:orientation="horizontal">
 
-            <android.support.v7.widget.AppCompatImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/btn_play_prev"
-                android:layout_width="@dimen/btn_size"
-                android:layout_height="@dimen/btn_size"
-                android:layout_marginTop="-10dp"
-                android:layout_weight="1"
-                android:scaleType="center"
-                app:srcCompat="@drawable/ic_play_prev_ds" />
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:padding="10dp"
+                app:srcCompat="@drawable/ic_play_prev" />
 
-            <android.support.v7.widget.AppCompatImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/btn_playback"
-                android:layout_width="@dimen/btn_large_size"
-                android:layout_height="@dimen/btn_large_size"
-                android:layout_marginTop="5dp"
-                android:layout_weight="1"
-                android:scaleType="center"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:layout_marginLeft="30dp"
+                android:layout_marginRight="30dp"
                 app:srcCompat="@drawable/ic_play_disable" />
 
-
-            <android.support.v7.widget.AppCompatImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/btn_play_next"
-                android:layout_width="@dimen/btn_size"
-                android:layout_height="@dimen/btn_size"
-                android:layout_marginTop="-10dp"
-                android:layout_weight="1"
-                android:scaleType="center"
-                app:srcCompat="@drawable/ic_play_next_ds" />
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:padding="10dp"
+                app:srcCompat="@drawable/ic_play_next" />
 
         </LinearLayout>
     </RelativeLayout>

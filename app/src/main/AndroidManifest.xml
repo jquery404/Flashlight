@@ -1,40 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="com.jquery404.flashlight"
+<manifest xmlns:tools="http://schemas.android.com/tools"
           xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- Flashlight permissions (our unique feature) -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
-    <uses-permission android:name="android.permission.WRITE_SETTINGS"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    
+    <!-- Media playback permissions (same as Spotify) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" android:minSdkVersion="34" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" android:minSdkVersion="33" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- Storage permissions for reading audio files from device -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" android:minSdkVersion="33" />
 
     <uses-feature android:name="android.hardware.camera"/>
     <uses-feature android:name="android.hardware.camera.flash"/>
 
-
-    <!-- Allows access to the Flashlight -->
-    <permission
-        android:name="android.permission.FLASHLIGHT"
-        android:permissionGroup="android.permission-group.HARDWARE_CONTROLS"
-        android:protectionLevel="normal"/>
-
-
     <application
         android:name=".FlashlightApplication"
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:usesCleartextTraffic="false">
 
         <activity
             android:name=".main.SplashActivity"
             android:configChanges="orientation|keyboardHidden"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.BrandedLaunch">
+            android:theme="@style/AppTheme.BrandedLaunch"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -46,14 +51,37 @@
             android:configChanges="locale|orientation|keyboardHidden"
             android:label="@string/app_name"
             android:screenOrientation="portrait"
-            android:theme="@style/AppTheme.NoActionBar.FullScreen"/>
-
-
-        <!--AdActivity-->
-        <activity
-            android:name="com.google.android.gms.ads.AdActivity"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize"
-            android:theme="@android:style/Theme.Translucent"/>
+            android:theme="@style/AppTheme.NoActionBar.FullScreen"
+            android:exported="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="com.jquery404.flashlight.ACTION_PLAY" />
+                <action android:name="com.jquery404.flashlight.ACTION_PAUSE" />
+                <action android:name="com.jquery404.flashlight.ACTION_NEXT" />
+                <action android:name="com.jquery404.flashlight.ACTION_PREV" />
+            </intent-filter>
+        </activity>
+        
+        <receiver
+            android:name=".main.MediaNotificationReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.jquery404.flashlight.ACTION_PLAY" />
+                <action android:name="com.jquery404.flashlight.ACTION_PAUSE" />
+                <action android:name="com.jquery404.flashlight.ACTION_NEXT" />
+                <action android:name="com.jquery404.flashlight.ACTION_PREV" />
+                <action android:name="com.jquery404.flashlight.ACTION_SEEK_FORWARD" />
+                <action android:name="com.jquery404.flashlight.ACTION_SEEK_BACKWARD" />
+                <action android:name="com.jquery404.flashlight.ACTION_SEEK_TO_PERCENT" />
+            </intent-filter>
+        </receiver>
+        
+        <service
+            android:name=".service.MusicPlaybackService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback"
+            android:stopWithTask="false" />
 
     </application>
 

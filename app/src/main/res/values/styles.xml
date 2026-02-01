@@ -20,7 +20,7 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
-        <item name="textColorError">@color/design_textinput_error_color_light</item>
+        <item name="colorError">@color/design_textinput_error_color_light</item>
     </style>
 
     <style name="flashlightSeekbar" parent="@android:style/Widget.SeekBar">

@@ -2,7 +2,8 @@ package com.jquery404.flashlight.main;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.v7.app.AppCompatActivity;
+import android.os.Looper;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.jquery404.flashlight.R;
 
@@ -18,7 +19,7 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash);
 
-        Handler handler = new Handler();
+        Handler handler = new Handler(Looper.getMainLooper());
         handler.postDelayed(
                 () -> {
                     loadCompassApp();
