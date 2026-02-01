@@ -4,7 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.media.MediaMetadataRetriever;
 import android.os.Environment;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 
 import com.jquery404.flashlight.R;
 import com.jquery404.flashlight.adapter.Song;

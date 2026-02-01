@@ -4,9 +4,8 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.AlertDialogLayout;
-import android.support.v7.widget.RecyclerView;
+import androidx.appcompat.app.AlertDialog;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,9 +17,7 @@ import com.jquery404.flashlight.main.MainActivity;
 
 import java.util.ArrayList;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+import com.jquery404.flashlight.databinding.PlaylistItemBinding;
 
 /**
  * Created by Faisal on 7/26/17.
@@ -50,9 +47,9 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
     @Override
     public void onBindViewHolder(PlaylistHolder holder, int i) {
         Song song = songs.get(i);
-        holder.songTitle.setText(song.getName());
-        holder.songDuration.setText(song.getDuration());
-        holder.songArtist.setText(song.getArtist());
+        holder.binding.songTitle.setText(song.getName());
+        holder.binding.songDuration.setText(song.getDuration());
+        holder.binding.songArtist.setText(song.getArtist());
     }
 
     @Override
@@ -62,14 +59,7 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
 
 
     class PlaylistHolder extends RecyclerView.ViewHolder {
-
-        @BindView(R.id.song_title)
-        TextView songTitle;
-        @BindView(R.id.song_duration)
-        TextView songDuration;
-        @BindView(R.id.song_artist)
-        TextView songArtist;
-
+        private PlaylistItemBinding binding;
         ArrayList<Song> songs = new ArrayList<>();
         Context context;
         Dialog dialog;
@@ -83,15 +73,12 @@ public class PlaylistAdapter extends RecyclerView.Adapter<PlaylistAdapter.Playli
             this.listener = listener;
             this.dialog = dialog;
 
-            ButterKnife.bind(this, itemView);
-        }
-
-        @OnClick(R.id.card_view)
-        void onClick() {
-            Song song = songs.get(getAdapterPosition());
-            listener.onSongSelected(song);
-            dialog.dismiss();
-
+            binding = PlaylistItemBinding.bind(itemView);
+            binding.cardView.setOnClickListener(v -> {
+                Song song = songs.get(getAdapterPosition());
+                listener.onSongSelected(song);
+                dialog.dismiss();
+            });
         }
     }
 }

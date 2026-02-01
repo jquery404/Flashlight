@@ -5,16 +5,12 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
 import com.jquery404.flashlight.R;
-
-/**
- * Created by faisal on 16/11/2017.
- */
 
 public class CircularVisualizerView extends View {
 
@@ -52,7 +48,6 @@ public class CircularVisualizerView extends View {
 
         mForePaint.setStrokeWidth(8f);
         mForePaint.setAntiAlias(true);
-        //mForePaint.setColor(ContextCompat.getColor(context, R.color.colorVisualizeTop));
     }
 
     public void updateVisualizer(byte[] bytes) {
@@ -60,9 +55,28 @@ public class CircularVisualizerView extends View {
         invalidate();
     }
 
+    public enum Mode {
+        BLOB, BARS
+    }
+    
     public void setActive(boolean active) {
         this.active = active;
+        invalidate();
     }
+
+    private Mode currentMode = Mode.BLOB;
+
+    public void setMode(Mode mode) {
+        this.currentMode = mode;
+        invalidate();
+    }
+
+    public void toggleMode() {
+        this.currentMode = (currentMode == Mode.BLOB) ? Mode.BARS : Mode.BLOB;
+        invalidate();
+    }
+
+    private android.graphics.Path mPath = new android.graphics.Path();
 
     @Override
     public void onDraw(Canvas canvas) {
@@ -71,44 +85,77 @@ public class CircularVisualizerView extends View {
         if (mBytes == null || !active)
             return;
 
-        if (mCycleColor) {
-            cycleColor();
+        if (currentMode == Mode.BLOB) {
+            drawBlob(canvas);
+        } else {
+            drawBars(canvas);
         }
 
-        if (mPoints == null || mPoints.length < mBytes.length * 4) {
-            mPoints = new float[mBytes.length * 4];
-        }
+        modulation += 0.05;
+    }
+
+    private void drawBlob(Canvas canvas) {
+        mForePaint.setStyle(Paint.Style.FILL);
+        mForePaint.setColor(Color.parseColor("#00BCD4")); // Cyan
+        mForePaint.setAlpha(180);
 
         mRect.set(0, 0, getWidth(), getHeight());
+        mPath.reset();
 
+        float centerX = mRect.width() / 2f;
+        float centerY = mRect.height() / 2f;
+        
+        int points = 120; 
+        
+        for (int i = 0; i <= points; i++) {
+            int index = (i * (mBytes.length - 1)) / points;
+            float rawValue = (byte) (mBytes[index] + 128);
+            
+            double angle = (double) i * 2 * Math.PI / points;
+            
+            float waveFactor = (float) (Math.sin(modulation + angle * 2) * 10);
+            
+            float baseRadius = mRect.width() * 0.30f;
+            float audioRadius = (rawValue / 255f) * (mRect.width() * 0.15f);
+            float radius = baseRadius + audioRadius + waveFactor;
 
-        for (int i = 0; i < mBytes.length - 1; i++) {
-            float[] cartPoint = {
-                    (float) i / (mBytes.length - 1),
-                    mRect.height() / 2 + ((byte) (mBytes[0] + 128)) * (mRect.height() / 2) / 64
-                    // i
-            };
+            float x = (float) (centerX + radius * Math.sin(angle));
+            float y = (float) (centerY + radius * Math.cos(angle));
 
-            float[] polarPoint = toPolar(cartPoint, mRect);
-            mPoints[i * 4] = polarPoint[0];
-            mPoints[i * 4 + 1] = polarPoint[1];
-
-            float[] cartPoint2 = {
-                    (float) (i + 1) / (mBytes.length - 1),
-                    mRect.height() / 2 + ((byte) (mBytes[i + 1] + 128)) * (mRect.height() / 2) / 64
-                    // i + 1
-            };
-
-            float[] polarPoint2 = toPolar(cartPoint2, mRect);
-            mPoints[i * 4 + 2] = polarPoint2[0];
-            mPoints[i * 4 + 3] = polarPoint2[1];
+            if (i == 0) {
+                mPath.moveTo(x, y);
+            } else {
+                mPath.lineTo(x, y);
+            }
         }
+        mPath.close();
+        canvas.drawPath(mPath, mForePaint);
+    }
 
-        canvas.drawLines(mPoints, mForePaint);
-
-        // Controls the pulsing rate
-        modulation += 0.4;
-        colorCounter += 128;
+    private void drawBars(Canvas canvas) {
+        mForePaint.setStyle(Paint.Style.STROKE);
+        mForePaint.setStrokeWidth(5f);
+        mForePaint.setColor(Color.parseColor("#00BCD4"));
+        
+        mRect.set(0, 0, getWidth(), getHeight());
+        float centerX = mRect.width() / 2f;
+        float centerY = mRect.height() / 2f;
+        float baseRadius = mRect.width() * 0.32f;
+        
+        int bars = 60;
+        for (int i = 0; i < bars; i++) {
+            int index = (i * (mBytes.length - 1)) / bars;
+            float rawValue = (byte) (mBytes[index] + 128);
+            float barHeight = (rawValue / 255f) * (mRect.width() * 0.12f);
+            
+            double angle = (double) i * 2 * Math.PI / bars;
+            float startX = (float) (centerX + baseRadius * Math.sin(angle));
+            float startY = (float) (centerY + baseRadius * Math.cos(angle));
+            float endX = (float) (centerX + (baseRadius + barHeight) * Math.sin(angle));
+            float endY = (float) (centerY + (baseRadius + barHeight) * Math.cos(angle));
+            
+            canvas.drawLine(startX, startY, endX, endY, mForePaint);
+        }
     }
 
     float modulation = 0;

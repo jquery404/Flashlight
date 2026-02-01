@@ -1,236 +1,685 @@
 package com.jquery404.flashlight.main;
 
 import android.Manifest;
-import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.hardware.Camera;
 import android.media.AudioManager;
-import android.media.MediaMetadataRetriever;
-import android.media.MediaPlayer;
 import android.media.audiofx.Visualizer;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.v7.widget.AppCompatImageView;
+import android.os.IBinder;
+import android.os.Looper;
+import android.os.PowerManager;
 import android.util.Log;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.InterstitialAd;
+import androidx.appcompat.widget.AppCompatImageView;
+
 import com.jquery404.flashlight.R;
 import com.jquery404.flashlight.adapter.Song;
 import com.jquery404.flashlight.custom.AboutDialog;
+import com.jquery404.flashlight.custom.CircularSeekBar;
+import com.jquery404.flashlight.custom.DotCircularProgressBar;
 import com.jquery404.flashlight.custom.OnSongSelectedListener;
 import com.jquery404.flashlight.custom.SongListDialog;
 import com.jquery404.flashlight.custom.SongManager;
+import com.jquery404.flashlight.databinding.ActivityMainBinding;
 import com.jquery404.flashlight.manager.Utilities;
-import com.sdsmdg.harjot.crollerTest.Croller;
-import com.sdsmdg.harjot.crollerTest.OnCrollerChangeListener;
+import com.jquery404.flashlight.service.MusicPlaybackService;
+import com.jquery404.flashlight.service.PlaybackState;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 import pub.devrel.easypermissions.AfterPermissionGranted;
-import pub.devrel.easypermissions.AppSettingsDialog;
 import pub.devrel.easypermissions.EasyPermissions;
 
 /**
  * Created by Faisal on 6/30/17.
+ * Refactored for Service-based architecture.
  */
 
-public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Callback, MediaPlayer.OnCompletionListener,
-        Visualizer.OnDataCaptureListener, OnCrollerChangeListener, OnSongSelectedListener, EasyPermissions.PermissionCallbacks {
+public class MainActivity extends BaseCompatActivity implements
+        Visualizer.OnDataCaptureListener, OnSongSelectedListener, EasyPermissions.PermissionCallbacks,
+        MusicPlaybackService.PlaybackStateListener {
 
-    @BindView(R.id.myvisualizerview)
-    VisualizerView visualizerView;
-
-    @BindView(R.id.mycricularvisualizer)
-    CircularVisualizerView circularVisualizer;
-
-    @BindView(R.id.songtitle)
-    TextView tvSongTitle;
-    @BindView(R.id.bpm)
-    TextView tvBPM;
-
-    @BindView(R.id.preview)
-    SurfaceView preview;
-
-    @BindView(R.id.background_beat)
-    View backgroundBeat;
-    @BindView(R.id.soundplate)
-    View soundPlate;
-
-    @BindView(R.id.croller)
-    Croller mCroller;
-
-    @BindView(R.id.circleview_wrapper)
-    View circleViewWrapper;
-    @BindView(R.id.btn_browser)
-    View btnBrowser;
-    @BindView(R.id.progressBarm)
-    View progressBar;
-
-    @BindView(R.id.flash_light)
-    AppCompatImageView btnFlash;
-    @BindView(R.id.btn_playback)
-    AppCompatImageView btnPlay;
-    @BindView(R.id.btn_play_next)
-    AppCompatImageView btnNext;
-    @BindView(R.id.btn_play_prev)
-    AppCompatImageView btnPrev;
-
-    @BindView(R.id.adView)
-    AdView adView;
+    private ActivityMainBinding binding;
+    
+    private VisualizerView visualizerView;
+    private int lastAudioSessionId = -1;
+    private CircularVisualizerView circularVisualizer;
+    private TextView tvSongTitle;
+    private TextView tvBPM;
+    private TextView tvHeaderSongName;
+    private TextView tvHeaderArtistName;
+    private ImageView ivAlbumArt;
+    private View backgroundBeat;
+    private View soundPlate;
+    private View mCroller;
+    private View circleViewWrapper;
+    private View btnBrowser;
+    private View progressBar; // Ideally should be a SeekBar, but keeping original View type if generic, though refactoring to support seek
+    private ProgressBarHandler progressBarHandler; 
+    
+    private AppCompatImageView btnFlash;
+    private AppCompatImageView btnPlay;
+    private AppCompatImageView btnNext;
+    private AppCompatImageView btnPrev;
 
     private static final int REQUEST_PATH = 121;
     private static final int REQUEST_CAMERA_MIC_STORAGE = 122;
-    private boolean cameraInitialize = false;
-    private String[] perms = {
-            Manifest.permission.CAMERA,
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.READ_EXTERNAL_STORAGE};
+    private static final int REQUEST_NOTIFICATION_PERMISSION = 123;
+    
+    private String[] getRequiredPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            return new String[]{
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.READ_MEDIA_AUDIO};
+        } else {
+            return new String[]{
+                    Manifest.permission.CAMERA,
+                    Manifest.permission.RECORD_AUDIO,
+                    Manifest.permission.READ_EXTERNAL_STORAGE};
+        }
+    }
 
     private enum PlayState {
         PLAY, PAUSE, STOP, DISABLE
     }
 
-    private InterstitialAd mInterstitialAd;
-    private boolean allowStorage, allowMic, allowCamera;
-    private MediaPlayer mMediaPlayer;
     private Visualizer mVisualizer;
-    public float[] intensity = new float[4];
-    private boolean isSongSelected, isSongPlaying;
-    private Handler mHandler = new Handler();
+    private BeatDetector beatDetector;
+    private Handler mHandler = new Handler(Looper.getMainLooper());
+    private android.animation.ObjectAnimator rotationAnimator;
     private Utilities utils;
     private SongManager songManager;
-    private Camera camera;
-    private boolean useFlash;
-    private boolean isFlashOn;
-    private boolean hasFlash;
-    Camera.Parameters params;
-    SurfaceHolder mHolder;
+    private FlashLightManager flashLightManager;
+    private boolean useFlash = true;
     private ArrayList<Song> songsList;
     private SongListDialog songListDialog;
     boolean doubleBackToExitPressedOnce = false;
-
+    
+    private MusicPlaybackService playbackService;
+    private boolean serviceBound = false;
+    private PlaybackState lastState = PlaybackState.EMPTY;
+    
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            MusicPlaybackService.MusicBinder binder = (MusicPlaybackService.MusicBinder) service;
+            playbackService = binder.getService();
+            playbackService.setListener(MainActivity.this);
+            serviceBound = true;
+            
+            // Sync initial state
+            onStateUpdated(playbackService.getState());
+            
+            // Init visualizer if playing
+            initVisualizer();
+        }
+        
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            playbackService = null;
+            serviceBound = false;
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        try {
+            binding = ActivityMainBinding.inflate(getLayoutInflater());
+            setContentView(binding.getRoot());
 
-        ButterKnife.bind(this);
-        initView();
+            linkViews();
+            setupClickListeners();
+            initView();
+            
+            requestNotificationPermission();
+            
+            // Bind service
+            Intent serviceIntent = new Intent(this, MusicPlaybackService.class);
+            startService(serviceIntent); // Ensure started
+            bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
-        onAskPermission();
+            onAskPermission();
+            
+            // Handle intent
+            handleNotificationAction(getIntent());
+
+        } catch (Exception e) {
+            Log.e("MainActivity", "Error in onCreate", e);
+            Toast.makeText(this, "Error initializing app: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            finish();
+        }
     }
+    
+    private void linkViews() {
+        visualizerView = binding.myvisualizerview;
+        circularVisualizer = binding.mycricularvisualizer;
+        tvSongTitle = binding.songtitle;
+        tvBPM = binding.bpm;
+        backgroundBeat = binding.backgroundBeat;
+        soundPlate = binding.soundplate;
+        mCroller = binding.croller;
+        
+        // Setup CircularSeekBar listener if applicable
+        if (mCroller instanceof CircularSeekBar) {
+            ((CircularSeekBar) mCroller).setSeekBarChangeListener(new CircularSeekBar.OnSeekChangeListener() {
+                @Override
+                public void onProgressChange(CircularSeekBar view, int newProgress) {
+                    // Logic for manual seeking if we want it later
+                }
+            });
+        } else if (mCroller instanceof DotCircularProgressBar) {
+            // New dot-based progress bar doesn't need touch listener for now as per design
+            Log.d("MainActivity", "Using premium DotCircularProgressBar");
+        }
+        
+        tvHeaderSongName = binding.tvHeaderSongName;
+        tvHeaderArtistName = binding.tvHeaderArtistName;
+        ivAlbumArt = binding.albumArt;
 
-
-    public void initView() {
-        AdRequest adRequest = new AdRequest.Builder().build();
-        adView.loadAd(adRequest);
-
-        utils = new Utilities();
-        songManager = new SongManager();
-
-        mCroller.setLabel("");
-
-        useFlash = true;
+        // Visualizer Toggle Listener on center circle
+        if (binding.circleviewWrapper != null) {
+            binding.circleviewWrapper.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (lastState != null && lastState.isPlaying() && circularVisualizer != null) {
+                        circularVisualizer.toggleMode();
+                        Log.d("MainActivity", "Visualizer mode toggled");
+                    }
+                }
+            });
+        }
+        
+        circleViewWrapper = binding.circleviewWrapper;
+        if (binding.bottomNavWrapper != null) {
+            btnBrowser = binding.bottomNavWrapper.findViewById(R.id.btn_browser);
+            btnFlash = (AppCompatImageView) binding.bottomNavWrapper.findViewById(R.id.flash_light);
+        }
+        progressBar = binding.progressBarm;
+        btnPlay = binding.btnPlayback;
+        btnNext = binding.btnPlayNext;
+        btnPrev = binding.btnPlayPrev;
     }
+    
+    private void setupClickListeners() {
+        if (binding == null) return;
+        
+        if (btnNext != null) btnNext.setOnClickListener(v -> onClickNext());
+        if (btnPrev != null) btnPrev.setOnClickListener(v -> onClickPrev());
+        if (btnPlay != null) btnPlay.setOnClickListener(v -> onClickPlay());
+        
+        if (binding.bottomNavWrapper != null) {
+            View btnFacebook = binding.bottomNavWrapper.findViewById(R.id.btn_facebook);
+            if (btnFacebook != null) btnFacebook.setOnClickListener(v -> onClickFacebook());
+            
+            View btnAbout = binding.bottomNavWrapper.findViewById(R.id.btn_about);
+            if (btnAbout != null) btnAbout.setOnClickListener(v -> onClickAbout());
+            
+            if (btnBrowser != null) btnBrowser.setOnClickListener(v -> onClickBrowser());
+            if (btnFlash != null) btnFlash.setOnClickListener(v -> onClickFlashLight());
+        }
+        
+        // Seekbar logic (hacky if using generic View as progress bar, but assuming it's View for now as per original code)
+        // If progressBar is actually a SeekBar, let's cast it safely
+        if (progressBar instanceof SeekBar) {
+            ((SeekBar) progressBar).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    // Update local time text if exists
+                }
 
-    public void resumeSong() {
-        circularVisualizer.setActive(true);
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                    // Stop updates
+                    stopProgressUpdates();
+                }
 
-        mMediaPlayer.start();
-        changePlayBtn(MainActivity.PlayState.PLAY);
-        animRotate();
-    }
-
-    public void pauseSong() {
-        circularVisualizer.setActive(false);
-        mMediaPlayer.pause();
-        changePlayBtn(MainActivity.PlayState.PAUSE);
-        resetanim();
-    }
-
-    @AfterPermissionGranted(REQUEST_CAMERA_MIC_STORAGE)
-    void onAskPermission() {
-        if (EasyPermissions.hasPermissions(this, perms)) {
-            initAudio();
-        } else {
-            EasyPermissions.requestPermissions(this,
-                    getString(R.string.request_permission_camera_record_storage),
-                    REQUEST_CAMERA_MIC_STORAGE, perms);
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    if (serviceBound && playbackService != null && lastState.getDuration() > 0) {
+                        int percent = seekBar.getProgress(); // Assuming max 100 or 1000
+                        int max = seekBar.getMax();
+                        long newPos = (lastState.getDuration() * percent) / max;
+                        playbackService.seekTo(newPos);
+                    }
+                    startProgressUpdates();
+                }
+            });
         }
     }
 
-
-    private void initAudio() {
-        setVolumeControlStream(AudioManager.STREAM_MUSIC);
-        mMediaPlayer = new MediaPlayer();
-        mMediaPlayer.setOnCompletionListener(this);
+    public void initView() {
+        try {
+            utils = new Utilities();
+            songManager = new SongManager();
+            flashLightManager = new FlashLightManager(this);
+            beatDetector = new BeatDetector();
+            progressBarHandler = new ProgressBarHandler();
+            
+            useFlash = false; // Default to off on startup
+            
+            // Sync flash button state from start
+            if (flashLightManager != null && flashLightManager.hasFlash()) {
+                btnFlash.setImageResource(R.drawable.ic_flash_light_off);
+            } else {
+                btnFlash.setImageResource(R.drawable.ic_flash_light_disable);
+            }
+        } catch (Exception e) {
+            Log.e("MainActivity", "Error in initView", e);
+        }
     }
 
-    private void initCamera() {
-        if (checkFlash()) {
-            hasFlash = true;
-            getCamera();
+    private void startRotation() {
+        if (rotationAnimator == null) {
+            rotationAnimator = android.animation.ObjectAnimator.ofFloat(circleViewWrapper, "rotation", 0f, 360f);
+            rotationAnimator.setDuration(12000);
+            rotationAnimator.setRepeatCount(android.animation.ObjectAnimator.INFINITE);
+            rotationAnimator.setInterpolator(new android.view.animation.LinearInterpolator());
+        }
+        if (circleViewWrapper != null) {
+            if (rotationAnimator.isPaused()) {
+                rotationAnimator.resume();
+            } else if (!rotationAnimator.isStarted()) {
+                rotationAnimator.start();
+            }
+        }
+    }
 
+    private void stopRotation() {
+        if (rotationAnimator != null && rotationAnimator.isStarted()) {
+            rotationAnimator.pause();
+        }
+    }
+    
+    // ============================================================================================
+    // Service Interaction & State Listener
+    // ============================================================================================
+
+    @Override
+    public void onStateUpdated(PlaybackState state) {
+        this.lastState = state;
+        
+        // Center circle text and progress updated in updateProgressUI via ProgressHandler
+        if (state.isPlaying()) {
+            startProgressUpdates();
+            startRotation();
         } else {
-            hasFlash = false;
-            btnFlash.setImageResource(R.drawable.ic_flash_light_disable);
-            android.app.AlertDialog.Builder alert = new android.app.AlertDialog.Builder(MainActivity.this);
-            alert.setTitle("Error!");
-            alert.setMessage("Your phone does not have the flash!");
-            alert.setPositiveButton("OK", (d, i) -> finish());
+            stopProgressUpdates();
+            stopRotation();
+        }
+
+        // Update Header Info
+        if (state.getSong() != null) {
+            if (tvHeaderSongName != null) tvHeaderSongName.setText(state.getSong().getName());
+            if (tvHeaderArtistName != null) tvHeaderArtistName.setText(state.getSong().getArtist());
+            
+            // Display album art in header
+            if (ivAlbumArt != null) {
+                if (state.getSong().getAlbumArt() != null) {
+                    android.graphics.Bitmap art = BitmapFactory.decodeByteArray(
+                        state.getSong().getAlbumArt(), 0, state.getSong().getAlbumArt().length);
+                    ivAlbumArt.setImageBitmap(art);
+                } else {
+                    ivAlbumArt.setImageResource(R.drawable.soundplate);
+                }
+            }
+        }
+        
+        // Update Play/Pause UI
+        if (state.isPlaying()) {
+            changePlayBtn(PlayState.PLAY);
+            circularVisualizer.setActive(true);
+            animRotate();
+            if (mVisualizer != null) mVisualizer.setEnabled(true);
+            
+            startProgressUpdates();
+        } else {
+            changePlayBtn(PlayState.PAUSE);
+            circularVisualizer.setActive(false);
+            resetanim();
+            // Don't disable visualizer immediately on pause to keep effect? Or disable to save battery.
+            // Original code disabled it.
+            if (mVisualizer != null) mVisualizer.setEnabled(false);
+            
+            stopProgressUpdates();
+            turnOffFlash();
+        }
+        
+        // One-shot progress update to sync position
+        updateProgressUI(state.getCurrentPosition(System.currentTimeMillis()), state.getDuration());
+        
+        // Init/Re-init visualizer if needed (loaded or session ID changed)
+        if (serviceBound && playbackService != null) {
+            int currentSessionId = playbackService.getAudioSessionId();
+            boolean sessionChanged = (currentSessionId != lastAudioSessionId);
+            
+            if ((mVisualizer == null || sessionChanged) && state.isPlaying()) {
+                 if (sessionChanged) {
+                     // Release old one if ID changed
+                     if (mVisualizer != null) {
+                         mVisualizer.release();
+                         mVisualizer = null;
+                     }
+                 }
+                 initVisualizer();
+                 lastAudioSessionId = currentSessionId;
+            }
+        }
+    }
+    
+    // ============================================================================================
+    // Progress Loop (Clock-based)
+    // ============================================================================================
+    
+    private void startProgressUpdates() {
+        progressBarHandler.start();
+    }
+    
+    private void stopProgressUpdates() {
+        progressBarHandler.stop();
+    }
+    
+    private class ProgressBarHandler implements Runnable {
+        private boolean isRunning = false;
+        
+        public void start() {
+            if (!isRunning) {
+                isRunning = true;
+                mHandler.post(this);
+            }
+        }
+        
+        public void stop() {
+            isRunning = false;
+            mHandler.removeCallbacks(this);
+        }
+
+        @Override
+        public void run() {
+            if (!isRunning || !serviceBound || playbackService == null) return;
+            
+            PlaybackState state = playbackService.getState();
+            if (state.isPlaying()) {
+                long currentPos = state.getCurrentPosition(System.currentTimeMillis());
+                long duration = state.getDuration();
+                updateProgressUI(currentPos, duration);
+                mHandler.postDelayed(this, 1000); // Update every second
+            } else {
+                isRunning = false;
+            }
+        }
+    }
+    
+    private void updateProgressUI(long current, long duration) {
+        // Original code used a custom view or progress bar, let's adapt
+        // Assuming progressBar is a View that changes width or a ProgressBar
+        // Based on original code: "utils.getProgressPercentage"
+        
+        // If it's a standard ProgressBar/SeekBar
+        if (progressBar instanceof android.widget.ProgressBar && duration > 0) {
+            int progress = (int) ((current * 100) / duration); // 0-100 range?
+            // If max is 1000
+            android.widget.ProgressBar pb = (android.widget.ProgressBar) progressBar;
+            if (pb.getMax() > 100) {
+                progress = (int) ((current * pb.getMax()) / duration);
+            }
+            pb.setProgress(progress);
+        }
+        
+        if (mCroller != null && duration > 0) {
+            if (mCroller instanceof DotCircularProgressBar) {
+                DotCircularProgressBar dcb = (DotCircularProgressBar) mCroller;
+                int progress = (int) ((current * dcb.getMaxProgress()) / duration);
+                dcb.setProgress(progress);
+            } else if (mCroller instanceof CircularSeekBar) {
+                CircularSeekBar csb = (CircularSeekBar) mCroller;
+                int progress = (int) ((current * csb.getMaxProgress()) / duration);
+                csb.setProgress(progress);
+            } else if (mCroller instanceof android.widget.ProgressBar) {
+                android.widget.ProgressBar pb = (android.widget.ProgressBar) mCroller;
+                int progress = (int) ((current * pb.getMax()) / duration);
+                pb.setProgress(progress);
+            }
+        }
+        
+        // Update Center Circle Text
+        if (lastState != null && lastState.getSong() != null) {
+            tvSongTitle.setText(utils.milliSecondsToTimer(current));
+            tvBPM.setText(lastState.getSong().getBitrate() + " KBPS");
+        }
+        
+        // Also update text views if any (not shown in original linked code but common)
+        // Original had "notification_time_current" in notification, implies we might want it here too.
+    }
+
+    // ============================================================================================
+    // Controls
+    // ============================================================================================
+
+    public void onClickNext() {
+        if (serviceBound && playbackService != null) {
+            playbackService.skipToNext();
+        }
+    }
+
+    public void onClickPrev() {
+        if (serviceBound && playbackService != null) {
+            playbackService.skipToPrevious();
+        }
+    }
+
+    public void onClickPlay() {
+        if (!serviceBound || playbackService == null) return;
+        
+        PlaybackState state = playbackService.getState();
+        if (state.getSong() == null) {
+            Toast.makeText(this, "Please select a song first", Toast.LENGTH_SHORT).show();
+            // Possibly open browser
+            onClickBrowser();
+            return;
+        }
+        
+        if (state.isPlaying()) {
+            playbackService.pause();
+        } else {
+            playbackService.play();
+        }
+    }
+    
+    @Override
+    public void onSongSelected(Song song) {
+        if (songsList != null && serviceBound && playbackService != null) {
+            int index = songsList.indexOf(song);
+            if (index != -1) {
+                playbackService.playSong(songsList, index);
+            }
+        }
+        if (songListDialog != null && songListDialog.isShowing()) {
+            songListDialog.dismiss();
+        }
+    }
+    
+    // ============================================================================================
+    // Other Setup
+    // ============================================================================================
+
+    @AfterPermissionGranted(REQUEST_CAMERA_MIC_STORAGE)
+    void onAskPermission() {
+        String[] requiredPerms = getRequiredPermissions();
+        if (EasyPermissions.hasPermissions(this, requiredPerms)) {
+            // Permission granted
+        } else {
+            EasyPermissions.requestPermissions(this,
+                    getString(R.string.request_permission_camera_record_storage),
+                    REQUEST_CAMERA_MIC_STORAGE, requiredPerms);
         }
     }
 
     private void initVisualizer() {
-        if (mVisualizer == null) {
-            mVisualizer = new Visualizer(mMediaPlayer.getAudioSessionId());
-            mVisualizer.setDataCaptureListener(this, Visualizer.getMaxCaptureRate() / 2, true, false);
-        }
-        mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
-        mVisualizer.setEnabled(true);
-    }
-
-    private void initInterstitialAd() {
-        mInterstitialAd = new InterstitialAd(this);
-        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_full_screen));
-        AdRequest intAdRequest = new AdRequest.Builder().build();
-        mInterstitialAd.loadAd(intAdRequest);
-        mInterstitialAd.setAdListener(new AdListener() {
-            public void onAdLoaded() {
-                showInterstitial();
+        if (!serviceBound || playbackService == null) return;
+        
+        int sessionId = playbackService.getAudioSessionId();
+        if (sessionId == 0) return;
+        
+        try {
+            if (mVisualizer != null) {
+                mVisualizer.release();
             }
-        });
-    }
-
-    private void showInterstitial() {
-        if (mInterstitialAd.isLoaded()) {
-            mInterstitialAd.show();
+            
+            mVisualizer = new Visualizer(sessionId);
+            int captureSize = Visualizer.getCaptureSizeRange()[1];
+            mVisualizer.setCaptureSize(captureSize);
+            mVisualizer.setDataCaptureListener(this, Visualizer.getMaxCaptureRate() / 2, true, true);
+            mVisualizer.setEnabled(true);
+            
+            if (beatDetector != null) beatDetector.reset();
+            
+        } catch (Exception e) {
+            Log.e("MainActivity", "Error initializing visualizer", e);
         }
     }
 
+    // ... (Keep existing visualizer callbacks, anim methods, flash methods)
+
+    // Simplified Browser Click
+    public void onClickBrowser() {
+        String[] requiredPerms = getRequiredPermissions();
+        if (!EasyPermissions.hasPermissions(this, requiredPerms)) {
+            EasyPermissions.requestPermissions(this,
+                    getString(R.string.request_permission_camera_record_storage),
+                    REQUEST_CAMERA_MIC_STORAGE, requiredPerms);
+            return;
+        }
+        
+        if (songsList == null || songsList.isEmpty()) {
+            loadPlaylist();
+        } else {
+             showSongList();
+        }
+    }
+    
+    private void showSongList() {
+        if (songListDialog != null) {
+            songListDialog.dismiss();
+        }
+        songListDialog = new SongListDialog(MainActivity.this, songsList,
+                android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        songListDialog.show();
+    }
+    
+    // Async Task for reading songs (Legacy, keeping for now)
+    // Spotify-style instant loading
+    private void loadPlaylist() {
+        if (songManager == null) songManager = new SongManager(MainActivity.this);
+        if (songsList == null) songsList = new ArrayList<>();
+        
+        // Check if cache exists
+        if (songManager.hasCache()) {
+            // Cache exists - load instantly (synchronous, fast)
+            if (songsList.isEmpty()) {
+                ArrayList<Song> cachedSongs = songManager.getPlayList();
+                if (cachedSongs != null && !cachedSongs.isEmpty()) {
+                    songsList.addAll(cachedSongs);
+                    Log.d("MainActivity", "Loaded " + songsList.size() + " songs from cache instantly");
+                }
+            }
+            // Show list immediately
+            showSongList();
+        } else {
+            // No cache - scan in background with progressive updates
+            Log.d("MainActivity", "No cache found, starting progressive scan...");
+            
+            // Show dialog immediately with empty list
+            showSongList();
+            
+            new Thread(() -> {
+                // Pass callback to update UI as songs are found
+                songManager.getPlayList(true, new SongManager.SongScanCallback() {
+                    @Override
+                    public void onSongFound(Song song) {
+                        runOnUiThread(() -> {
+                            // Add to local list and verify it's not a duplicate
+                            if (!songsList.contains(song)) {
+                                songsList.add(song);
+                                // Update dialog if showing
+                                if (songListDialog != null && songListDialog.isShowing()) {
+                                    songListDialog.notifyDataSetChanged();
+                                }
+                            }
+                        });
+                    }
+                    
+                    @Override
+                    public void onScanComplete(int totalSongs) {
+                         runOnUiThread(() -> {
+                             Log.d("MainActivity", "Scan complete. Total songs: " + totalSongs);
+                             if (songListDialog != null && songListDialog.isShowing()) {
+                                 songListDialog.notifyDataSetChanged();
+                             }
+                         });
+                    }
+                });
+            }).start();
+        }
+    }
+
+    // ... (Keep existing onClickFacebook, onClickAbout, onClickFlashLight)
+    
+    public void onClickFacebook() {
+        Intent intent = new Intent();
+        intent.setAction(Intent.ACTION_VIEW);
+        intent.addCategory(Intent.CATEGORY_BROWSABLE);
+        intent.setData(Uri.parse("http://facebook.com/jquery404/"));
+        startActivity(intent);
+    }
+
+    public void onClickAbout() {
+        AboutDialog aboutDialog = new AboutDialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        aboutDialog.show();
+    }
+    
+    public void onClickFlashLight() {
+        Log.d("MainActivity", "Flash button clicked. Current useFlash: " + useFlash);
+        if (flashLightManager.hasFlash()) {
+            useFlash = !useFlash;
+            Log.d("MainActivity", "Toggled useFlash to: " + useFlash);
+            if (useFlash) {
+                btnFlash.setImageResource(R.drawable.ic_flash_light);
+            } else {
+                btnFlash.setImageResource(R.drawable.ic_flash_light_off);
+                flashLightManager.turnOffFlash();
+            }
+        } else {
+            btnFlash.setImageResource(R.drawable.ic_flash_light_disable);
+            Toast.makeText(this, "Your phone does not have the flash!", Toast.LENGTH_SHORT).show();
+        }
+    }
+    
+    private void turnOffFlash() {
+        if (flashLightManager != null) flashLightManager.turnOffFlash();
+        if (btnFlash != null) btnFlash.setImageResource(R.drawable.ic_flash_light_off);
+    }
+    
+    // ... Any other required animation/visualizer methods ...
+    
     public void animShakeBox() {
         Animation shakeAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.anim_shake);
         soundPlate.setLayerType(View.LAYER_TYPE_HARDWARE, null);
@@ -242,217 +691,55 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         circleViewWrapper.setLayerType(View.LAYER_TYPE_HARDWARE, null);
         circleViewWrapper.startAnimation(rotateAnimation);
     }
-
-    // getting camera parameters
-    private void getCamera() {
-        mHolder = preview.getHolder();
-        mHolder.addCallback(this);
-        mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-        if (camera == null) {
-            try {
-                camera = Camera.open();
-                params = camera.getParameters();
-                try {
-                    camera.setPreviewDisplay(mHolder);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } catch (RuntimeException e) {
-                Log.e("SUCA.", e.getMessage());
-            }
-        }
-    }
-
-
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-    }
-
-    public void surfaceCreated(SurfaceHolder holder) {
-        mHolder = holder;
-        if (camera != null) {
-            try {
-                camera.setPreviewDisplay(mHolder);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-    }
-
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        if (camera != null) {
-            camera.stopPreview();
-            mHolder = null;
-        }
-    }
-
-    @OnClick(R.id.btn_play_next)
-    public void onClickNext() {
-        if (isSongSelected) {
-            Song newSong = songManager.playNextSong();
-            this.onSongSelected(newSong);
-        }
-    }
-
-    @OnClick(R.id.btn_play_prev)
-    public void onClickPrev() {
-        if (isSongSelected) {
-            Song newSong = songManager.playPrevSong();
-            this.onSongSelected(newSong);
-        }
-    }
-
-    @OnClick(R.id.btn_facebook)
-    public void onClickFacebook() {
-        Intent intent = new Intent();
-        intent.setAction(Intent.ACTION_VIEW);
-        intent.addCategory(Intent.CATEGORY_BROWSABLE);
-        intent.setData(Uri.parse("http://facebook.com/jquery404/"));
-        startActivity(intent);
-    }
-
-    @OnClick(R.id.btn_about)
-    public void onClickAbout() {
-        AboutDialog aboutDialog = new AboutDialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
-        aboutDialog.show();
-        initInterstitialAd();
-    }
-
-    @OnClick(R.id.btn_playback)
-    public void onClickPlay() {
-        if (!isSongSelected && !isSongPlaying) {
-            // TODO: 11/10/2017 change to alert dialog
-            Toast.makeText(this, "please select song first", Toast.LENGTH_SHORT).show();
-            btnPlay.setImageResource(R.drawable.ic_play_disable);
-        } else {
-            if (mMediaPlayer.isPlaying()) {
-                pauseSong();
-            } else if (!mMediaPlayer.isPlaying()) {
-                resumeSong();
-            }
-        }
-    }
-
-    @OnClick(R.id.btn_browser)
-    public void onClickBrowser() {
-        if (songsList == null) {
-            new ReadSongFile().execute();
-
-        } else {
-
-            /*songListDialog = new SongListDialog(this, songsList,
-                    android.R.style.Theme_Black_NoTitleBar_Fullscreen);*/
-            songListDialog.show();
-        }
-    }
-
-    @OnClick(R.id.flash_light)
-    public void onClickFlashLight() {
-        if (hasFlash) {
-            useFlash = !useFlash;
-            if (useFlash) {
-                btnFlash.setImageResource(R.drawable.ic_flash_light);
-            } else {
-                btnFlash.setImageResource(R.drawable.ic_flash_light_off);
-                turnOffFlash();
-            }
-        } else {
-            btnFlash.setImageResource(R.drawable.ic_flash_light_disable);
-            Toast.makeText(this, "Your phone does not have the flash!", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    public void updateProgressBar() {
-        mHandler.postDelayed(mUpdateTimeTask, 100);
-    }
-
-
-    private Runnable mUpdateTimeTask = new Runnable() {
-        public void run() {
-            long totalDuration = mMediaPlayer.getDuration();
-            long currentDuration = mMediaPlayer.getCurrentPosition();
-
-            int progress = (int) (utils.getProgressPercentage(currentDuration, totalDuration));
-            mCroller.setProgress(progress);
-
-            mHandler.postDelayed(this, 100);
-        }
-    };
-
+    
     private void resetanim() {
         circleViewWrapper.clearAnimation();
     }
 
-
     @Override
-    protected void onPause() {
-        super.onPause();
-
-        // on pause turn off the flash
-        turnOffFlash();
-        resetanim();
-
-        if (mVisualizer != null)
-            mVisualizer.setEnabled(false);
-
-        if (isFinishing() && mMediaPlayer != null) {
-            if (mVisualizer != null)
-                mVisualizer.release();
-            mHandler.removeCallbacks(mUpdateTimeTask);
-            mMediaPlayer.release();
-            mMediaPlayer = null;
+    public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
+        if (circularVisualizer != null) {
+            circularVisualizer.updateVisualizer(waveform);
+        } else {
+            Log.e("MainActivity", "circularVisualizer is NULL in receiving waveform");
         }
-
-
+        if (visualizerView != null) {
+            visualizerView.updateVisualizer(waveform);
+        }
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        if (isSongPlaying && mVisualizer != null) {
-            mVisualizer.setEnabled(true);
-            animRotate();
-        }
-
-    }
-
-    @Override
-    public void onBackPressed() {
-        if (doubleBackToExitPressedOnce) {
-            super.onBackPressed();
-            return;
-        }
-
-        this.doubleBackToExitPressedOnce = true;
-        Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show();
-
-        new Handler().postDelayed(new Runnable() {
-
-            @Override
-            public void run() {
-                doubleBackToExitPressedOnce = false;
+    public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
+        // Beats only
+        if (beatDetector != null && beatDetector.detectBeat(fft)) {
+            Log.d("MainActivity", "Beat detected! useFlash=" + useFlash + ", flashLightManager=" + (flashLightManager != null));
+            animShakeBox();
+            if (useFlash && flashLightManager != null) {
+                Log.d("MainActivity", "Triggering flash");
+                flashLightManager.flash();
             }
-        }, 2000);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        // on stop release the camera
-        if (camera != null) {
-            camera.release();
-            camera = null;
         }
     }
 
-
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (serviceBound) {
+            if (playbackService != null) playbackService.setListener(null);
+            unbindService(serviceConnection);
+            serviceBound = false;
+        }
+        stopProgressUpdates();
+        if (mVisualizer != null) {
+            mVisualizer.release();
+            mVisualizer = null;
+        }
+        if (flashLightManager != null) {
+            flashLightManager.release();
+        }
+    }
+    
+    // Helper
     public void changePlayBtn(PlayState state) {
         if (state == PlayState.DISABLE)
             btnPlay.setImageResource(R.drawable.ic_play_disable);
@@ -461,204 +748,49 @@ public class MainActivity extends BaseCompatActivity implements SurfaceHolder.Ca
         else if (state == PlayState.PLAY)
             btnPlay.setImageResource(R.drawable.ic_pause);
     }
-
-    public void changeNextPrevBtn() {
-        if (songsList.size() > 0) {
-            btnNext.setImageResource(R.drawable.ic_play_next);
-            btnPrev.setImageResource(R.drawable.ic_play_prev);
+    
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) 
+                != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_NOTIFICATION_PERMISSION);
+            }
         }
     }
+    
+    private void handleNotificationAction(Intent intent) {
+        if (intent == null) return;
+        
+        String action = intent.getAction();
+        if (action == null) return;
+        
+        if (MediaNotificationReceiver.ACTION_PLAY.equals(action)) {
+            onClickPlay();
+        } else if (MediaNotificationReceiver.ACTION_PAUSE.equals(action)) {
+            onClickPlay();
+        } else if (MediaNotificationReceiver.ACTION_NEXT.equals(action)) {
+            onClickNext();
+        } else if (MediaNotificationReceiver.ACTION_PREV.equals(action)) {
+            onClickPrev();
+        }
+    }
+    
+    // Method from interface EasyPermissions
+    @Override
+    public void onPermissionsGranted(int requestCode, java.util.List<String> perms) {}
 
+    @Override
+    public void onPermissionsDenied(int requestCode, java.util.List<String> perms) {}
+    
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, this);
+    }
 
     public static void start(Context context) {
         Intent intent = new Intent(context, MainActivity.class);
-        intent.putExtra("flag", context.getClass().getSimpleName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         context.startActivity(intent);
     }
-
-
-    @Override
-    public void onCompletion(MediaPlayer mp) {
-        Song nextSong = songManager.playNextSong();
-        onSongSelected(nextSong);
-        tvSongTitle.setText(nextSong.getName());
-    }
-
-
-    @Override
-    public void onWaveFormDataCapture(Visualizer visualizer, byte[] waveform, int samplingRate) {
-        visualizerView.updateVisualizer(waveform);
-        circularVisualizer.updateVisualizer(waveform);
-
-        if (waveform != null) {
-            intensity[0] = ((float) waveform[0] + 128f) / 256;
-            intensity[1] = ((float) waveform[1] + 128f) / 256;
-            intensity[2] = ((float) waveform[2] + 128f) / 256;
-            intensity[3] = ((float) waveform[3] + 128f) / 256;
-
-            if (intensity[3] < 0.5f) {
-                //backgroundBeat.setBackgroundResource(R.drawable.background);
-                mCroller.setMainCircleColor(R.drawable.background);
-                if (useFlash)
-                    turnOnFlash();
-            } else {
-                //backgroundBeat.setBackgroundColor(utils.getColorId(getApplicationContext()));
-                mCroller.setMainCircleColor(utils.getColorId(getApplicationContext()));
-                if (useFlash)
-                    turnOffFlash();
-            }
-        }
-    }
-
-    @Override
-    public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
-        visualizerView.updateVisualizerFFT(fft);
-        circularVisualizer.updateVisualizer(fft);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults, MainActivity.this);
-    }
-
-    @Override
-    public void onPermissionsGranted(int requestCode, List<String> perms) {
-
-    }
-
-    @Override
-    public void onPermissionsDenied(int requestCode, List<String> perms) {
-        Log.d("TAG", "onPermissionsDenied:" + requestCode + ":" + perms.size());
-        if (EasyPermissions.somePermissionPermanentlyDenied(this, perms)) {
-            new AppSettingsDialog.Builder(this).build().show();
-        }
-    }
-
-
-    public boolean checkFlash() {
-        return getApplicationContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
-    }
-
-    private void turnOnFlash() {
-        if (!isFlashOn && hasFlash) {
-            if (camera == null || params == null) {
-                return;
-            }
-
-            isFlashOn = true;
-
-            params.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
-            camera.setParameters(params);
-            camera.startPreview();
-        }
-    }
-
-    private void turnOffFlash() {
-        if (isFlashOn && hasFlash) {
-            if (camera == null || params == null) {
-                return;
-            }
-
-            isFlashOn = false;
-
-            params.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-            camera.setParameters(params);
-            camera.stopPreview();
-        }
-    }
-
-    @Override
-    public void onProgressChanged(Croller croller, int progress) {
-
-    }
-
-    @Override
-    public void onStartTrackingTouch(Croller croller) {
-        mHandler.removeCallbacks(mUpdateTimeTask);
-    }
-
-    @Override
-    public void onStopTrackingTouch(Croller croller) {
-        mHandler.removeCallbacks(mUpdateTimeTask);
-        int totalDuration = mMediaPlayer.getDuration();
-        int currentPosition = utils.progressToTimer(croller.getProgress(), totalDuration);
-        mMediaPlayer.seekTo(currentPosition);
-        updateProgressBar();
-    }
-
-    @Override
-    public void onSongSelected(Song song) {
-
-        if (!isSongSelected) {
-            mCroller.setOnCrollerChangeListener(this);
-            isSongSelected = true;
-        }
-
-        try {
-            if (mMediaPlayer == null)
-                initAudio();
-
-            if (!cameraInitialize) {
-                initCamera();
-                cameraInitialize = true;
-            }
-            mMediaPlayer.reset();
-            mMediaPlayer.setDataSource(song.getPath());
-            mMediaPlayer.prepare();
-            mMediaPlayer.start();
-            animRotate();
-
-            initVisualizer();
-            tvBPM.setText(getString(R.string.bpm_title, song.getBitrate()));
-            tvSongTitle.setText(song.getName());
-
-            song.setNextSong(songManager.getNextSong(songManager.getCurrentSongPos()));
-
-            changePlayBtn(MainActivity.PlayState.PLAY);
-            changeNextPrevBtn();
-
-            updateProgressBar();
-
-            isSongPlaying = true;
-
-        } catch (IllegalArgumentException e) {
-            e.printStackTrace();
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private class ReadSongFile extends AsyncTask<Void, Void, ArrayList<Song>> {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            progressBar.setVisibility(View.VISIBLE);
-        }
-
-        @Override
-        protected ArrayList<Song> doInBackground(Void... params) {
-            return songManager.getPlayList();
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<Song> songs) {
-            super.onPostExecute(songs);
-            progressBar.setVisibility(View.GONE);
-            songsList = songs;
-
-            songListDialog = new SongListDialog(MainActivity.this, songsList,
-                    android.R.style.Theme_Black_NoTitleBar_Fullscreen);
-            songListDialog.show();
-
-        }
-
-    }
-
-
 }

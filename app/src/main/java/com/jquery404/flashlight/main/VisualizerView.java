@@ -5,15 +5,11 @@ import android.graphics.Canvas;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.support.v4.content.ContextCompat;
+import androidx.core.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.View;
 
 import com.jquery404.flashlight.R;
-
-/**
- * Created by Faisal on 7/2/17.
- */
 
 public class VisualizerView extends View {
 

@@ -5,64 +5,34 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.TextView;
 
-import com.google.android.gms.ads.AdListener;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.InterstitialAd;
-import com.jquery404.flashlight.BuildConfig;
 import com.jquery404.flashlight.R;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+import com.jquery404.flashlight.databinding.ActivityAboutBinding;
 
 /**
  * Created by Faisal on 6/30/17.
  */
 
 public class AboutActivity extends BaseCompatActivity {
-    @BindView(R.id.app_version)
-    TextView tvVersion;
-
-
-    private InterstitialAd mInterstitialAd;
+    private ActivityAboutBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_about);
-        ButterKnife.bind(this);
+        binding = ActivityAboutBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         initViews();
     }
 
     private void initViews() {
-        tvVersion.setText(getString(R.string.app_name) + " " + BuildConfig.VERSION_NAME);
-
-        mInterstitialAd = new InterstitialAd(this);
-        mInterstitialAd.setAdUnitId(getString(R.string.interstitial_full_screen));
-        AdRequest intAdRequest = new AdRequest.Builder().build();
-        mInterstitialAd.loadAd(intAdRequest);
-        mInterstitialAd.setAdListener(new AdListener() {
-            public void onAdLoaded() {
-                showInterstitial();
-            }
-        });
-    }
-
-    private void showInterstitial() {
-        if (mInterstitialAd.isLoaded()) {
-            mInterstitialAd.show();
-        }
+        binding.appVersion.setText(getString(R.string.app_name) + " 2.0.0");
+        binding.btnClose.setOnClickListener(v -> finish());
     }
 
     public static void start(Context context) {
         Intent launchIntent = new Intent(context, AboutActivity.class);
         launchIntent.putExtra("flag", context.getClass().getSimpleName());
         context.startActivity(launchIntent);
-    }
-
-    @OnClick(R.id.btn_close)
-    public void onClickClose() {
-        finish();
     }
 }

@@ -6,6 +6,7 @@ package com.jquery404.flashlight.adapter;
 
 public class Song {
     private String name, path, bitrate, duration, artist, nextSong;
+    private byte[] albumArt;
 
 
     public Song() {
@@ -67,5 +68,13 @@ public class Song {
 
     public void setNextSong(String nextSong) {
         this.nextSong = nextSong;
+    }
+
+    public byte[] getAlbumArt() {
+        return albumArt;
+    }
+
+    public void setAlbumArt(byte[] albumArt) {
+        this.albumArt = albumArt;
     }
 }

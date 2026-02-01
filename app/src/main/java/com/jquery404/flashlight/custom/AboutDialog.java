@@ -4,42 +4,35 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.StyleRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StyleRes;
 
 import com.jquery404.flashlight.R;
 
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+import com.jquery404.flashlight.databinding.ActivityAboutBinding;
 
 /**
  * Created by faisal on 01/11/2017.
  */
 
 public class AboutDialog extends Dialog implements DialogInterface.OnClickListener {
-
+    private ActivityAboutBinding binding;
 
     public AboutDialog(@NonNull Context context, @StyleRes int themeResId) {
         super(context, themeResId);
     }
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_about);
+        binding = ActivityAboutBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        ButterKnife.bind(this);
+        binding.btnClose.setOnClickListener(v -> dismiss());
     }
 
     @Override
     public void onClick(DialogInterface dialogInterface, int i) {
-
-    }
-
-    @OnClick(R.id.btn_close)
-    public void onClickClose() {
-        dismiss();
     }
 }
