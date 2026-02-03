@@ -56,6 +56,7 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
     private MediaSessionCompat mediaSession;
     
     // State Management
+    private boolean resumeOnFocusGain = false;
     private List<Song> playlist = new ArrayList<>();
     private List<Integer> shuffledIndices = new ArrayList<>();
     private int currentIndex = -1;
@@ -300,6 +301,7 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
 
     public void play() {
         Log.d(TAG, "play() called. Current state: " + currentState.getState());
+        resumeOnFocusGain = false;
         if (mediaPlayer == null) initMediaPlayer();
 
         if (currentState.getState() == PlaybackState.State.PAUSED || 
@@ -326,6 +328,7 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
     
     public void pause() {
         Log.d(TAG, "pause() called");
+        resumeOnFocusGain = false;
         if (currentState.isActivePlayback()) {
             if (mediaPlayer != null) {
                 Log.d(TAG, "Pausing playback");
@@ -649,10 +652,13 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
             case AudioManager.AUDIOFOCUS_LOSS:
                 Log.d(TAG, "AUDIOFOCUS_LOSS - pausing");
                 pause();
+                resumeOnFocusGain = false;
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
                 Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT - pausing");
+                boolean wasPlaying = currentState.isPlaying();
                 pause();
+                resumeOnFocusGain = wasPlaying;
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK - ducking volume");
@@ -661,6 +667,11 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
             case AudioManager.AUDIOFOCUS_GAIN:
                 Log.d(TAG, "AUDIOFOCUS_GAIN - restoring volume");
                 if (mediaPlayer != null) mediaPlayer.setVolume(1.0f, 1.0f);
+                if (resumeOnFocusGain) {
+                    Log.d(TAG, "AUDIOFOCUS_GAIN - resuming playback");
+                    play();
+                }
+                resumeOnFocusGain = false;
                 break;
         }
     }
