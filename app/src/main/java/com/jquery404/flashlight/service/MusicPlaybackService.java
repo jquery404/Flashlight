@@ -57,10 +57,32 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
     
     // State Management
     private List<Song> playlist = new ArrayList<>();
+    private List<Integer> shuffledIndices = new ArrayList<>();
     private int currentIndex = -1;
     private PlaybackState currentState = PlaybackState.EMPTY;
+    private PlaybackState.RepeatMode repeatMode = PlaybackState.RepeatMode.ALL;
+    private PlaybackState.ShuffleMode shuffleMode = PlaybackState.ShuffleMode.OFF;
     
     private final Handler handler = new Handler(Looper.getMainLooper());
+    
+    private final Runnable progressPollRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (currentState.isPlaying()) {
+                updateState(PlaybackState.State.PLAYING);
+                handler.postDelayed(this, 1000); // Update every second
+            }
+        }
+    };
+
+    private void startPolling() {
+        handler.removeCallbacks(progressPollRunnable);
+        handler.postDelayed(progressPollRunnable, 1000);
+    }
+
+    private void stopPolling() {
+        handler.removeCallbacks(progressPollRunnable);
+    }
     
     // Listener for UI updates
     public interface PlaybackStateListener {
@@ -193,37 +215,123 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
         if (songs == null || songs.isEmpty() || index < 0 || index >= songs.size()) return;
         
         this.playlist = new ArrayList<>(songs);
-        this.currentIndex = index;
-        Song song = playlist.get(currentIndex);
+        if (shuffleMode == PlaybackState.ShuffleMode.ON) {
+            generateShuffledIndices();
+            // In shuffle mode, we still want to start with the selected song
+            this.currentIndex = findShuffledIndexForOriginal(index);
+        } else {
+            this.currentIndex = index;
+        }
         
+        Song song = playlist.get(index); // Always play the requested one first
         startPlayback(song);
     }
-    
+
+    private void generateShuffledIndices() {
+        shuffledIndices.clear();
+        for (int i = 0; i < playlist.size(); i++) {
+            shuffledIndices.add(i);
+        }
+        java.util.Collections.shuffle(shuffledIndices);
+    }
+
+    private int findShuffledIndexForOriginal(int originalIndex) {
+        for (int i = 0; i < shuffledIndices.size(); i++) {
+            if (shuffledIndices.get(i) == originalIndex) return i;
+        }
+        return 0;
+    }
+
+    private int getActualSongIndex() {
+        if (currentIndex < 0 || playlist.isEmpty()) return -1;
+        if (shuffleMode == PlaybackState.ShuffleMode.ON && !shuffledIndices.isEmpty()) {
+            if (currentIndex >= shuffledIndices.size()) currentIndex = 0;
+            return shuffledIndices.get(currentIndex);
+        }
+        if (currentIndex >= playlist.size()) currentIndex = 0;
+        return currentIndex;
+    }
+
+    @Nullable
+    private Song getCurrentSong() {
+        int index = getActualSongIndex();
+        if (index >= 0 && index < playlist.size()) {
+            return playlist.get(index);
+        }
+        return null;
+    }
+
+    public void toggleShuffle() {
+        if (shuffleMode == PlaybackState.ShuffleMode.OFF) {
+            shuffleMode = PlaybackState.ShuffleMode.ON;
+            generateShuffledIndices();
+            // Sync currentIndex to the shuffled list
+            if (currentIndex != -1 && !playlist.isEmpty()) {
+                currentIndex = findShuffledIndexForOriginal(currentIndex);
+            }
+        } else {
+            shuffleMode = PlaybackState.ShuffleMode.OFF;
+            // Sync currentIndex back to the original list
+            if (currentIndex != -1 && !shuffledIndices.isEmpty()) {
+                currentIndex = shuffledIndices.get(currentIndex);
+            }
+            shuffledIndices.clear();
+        }
+        updateState(currentState.getState());
+    }
+
+    public void toggleRepeat() {
+        if (repeatMode == PlaybackState.RepeatMode.OFF) {
+            repeatMode = PlaybackState.RepeatMode.ALL;
+        } else if (repeatMode == PlaybackState.RepeatMode.ALL) {
+            repeatMode = PlaybackState.RepeatMode.ONE;
+        } else {
+            repeatMode = PlaybackState.RepeatMode.OFF;
+        }
+        
+        // Apply native looping if Repeat One is active
+        if (mediaPlayer != null) {
+            mediaPlayer.setLooping(repeatMode == PlaybackState.RepeatMode.ONE);
+            Log.d(TAG, "toggleRepeat: setLooping=" + mediaPlayer.isLooping());
+        }
+        
+        updateState(currentState.getState());
+    }
+
     public void play() {
         Log.d(TAG, "play() called. Current state: " + currentState.getState());
-        if (currentState.getState() == PlaybackState.State.PAUSED) {
-            if (mediaPlayer != null) {
-                if (requestAudioFocus()) {
-                    Log.d(TAG, "Audio focus gained, starting playback");
+        if (mediaPlayer == null) initMediaPlayer();
+
+        if (currentState.getState() == PlaybackState.State.PAUSED || 
+            currentState.getState() == PlaybackState.State.ERROR ||
+            currentState.getState() == PlaybackState.State.BUFFERING) {
+            
+            if (requestAudioFocus()) {
+                try {
+                    Log.d(TAG, "Starting/Resuming playback");
                     mediaPlayer.start();
                     updateState(PlaybackState.State.PLAYING);
-                } else {
-                    Log.e(TAG, "Failed to gain audio focus");
+                    startPolling();
+                } catch (Exception e) {
+                    Log.e(TAG, "Error in play(): " + e.getMessage());
+                    updateState(PlaybackState.State.ERROR);
                 }
             }
         } else if (currentState.getState() == PlaybackState.State.STOPPED && currentIndex != -1) {
              Log.d(TAG, "Restarting playback from stopped state");
-             startPlayback(playlist.get(currentIndex));
+             Song song = getCurrentSong();
+             if (song != null) startPlayback(song);
         }
     }
     
     public void pause() {
         Log.d(TAG, "pause() called");
-        if (currentState.isPlaying()) {
+        if (currentState.isActivePlayback()) {
             if (mediaPlayer != null) {
                 Log.d(TAG, "Pausing playback");
                 mediaPlayer.pause();
                 updateState(PlaybackState.State.PAUSED);
+                stopPolling();
                 if (wakeLock != null && wakeLock.isHeld()) {
                     wakeLock.release();
                 }
@@ -264,11 +372,17 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
         
         currentIndex++;
         if (currentIndex >= playlist.size()) {
-            currentIndex = 0; 
+            if (repeatMode == PlaybackState.RepeatMode.ALL) {
+                currentIndex = 0;
+            } else {
+                stopPlayback();
+                return;
+            }
         }
         
         Log.d(TAG, "skipToNext: Moving to index " + currentIndex);
-        startPlayback(playlist.get(currentIndex));
+        Song song = getCurrentSong();
+        if (song != null) startPlayback(song);
     }
     
     public void skipToPrevious() {
@@ -298,7 +412,8 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
         }
         
         Log.d(TAG, "skipToPrevious: Moving to index " + currentIndex);
-        startPlayback(playlist.get(currentIndex));
+        Song song = getCurrentSong();
+        if (song != null) startPlayback(song);
     }
     
     public void stopPlayback() {
@@ -313,6 +428,7 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
             wakeLock.release();
         }
         updateState(PlaybackState.State.STOPPED);
+        stopPolling();
         stopForeground(true);
         if (mediaSession != null) {
             mediaSession.setActive(false);
@@ -342,12 +458,16 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
     
     @Override
     public void onPrepared(MediaPlayer mp) {
-        Log.d(TAG, "onPrepared() called");
+        Log.d(TAG, "onPrepared() called. Song: " + (getCurrentSong() != null ? getCurrentSong().getName() : "null"));
         if (requestAudioFocus()) {
             Log.d(TAG, "Audio focus granted, starting playback");
+            mp.setVolume(1.0f, 1.0f); 
+            // Apply current looping state
+            mp.setLooping(repeatMode == PlaybackState.RepeatMode.ONE);
             mp.start();
             updateState(PlaybackState.State.PLAYING);
-            Log.d(TAG, "MediaPlayer started, isPlaying: " + mp.isPlaying());
+            startPolling();
+            Log.d(TAG, "MediaPlayer started, isPlaying: " + mp.isPlaying() + ", looping: " + mp.isLooping());
         } else {
             Log.e(TAG, "Failed to get audio focus in onPrepared");
             updateState(PlaybackState.State.PAUSED);
@@ -356,7 +476,16 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
     
     @Override
     public void onCompletion(MediaPlayer mp) {
-        skipToNext();
+        Log.d(TAG, "onCompletion() called with repeatMode: " + repeatMode + ", isLooping: " + mp.isLooping());
+        // If native looping is on, onCompletion might not even be called, 
+        // but if it is, we handle it.
+        if (repeatMode == PlaybackState.RepeatMode.ONE) {
+            Log.d(TAG, "Repeat ONE: Ensuring playback continues");
+            mp.start();
+            updateState(PlaybackState.State.PLAYING);
+        } else {
+            skipToNext();
+        }
     }
     
     @Override
@@ -372,8 +501,7 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
     // ============================================================================================
     
     private void updateState(PlaybackState.State state) {
-        Song currentSong = (currentIndex >= 0 && currentIndex < playlist.size()) 
-                ? playlist.get(currentIndex) : null;
+        Song currentSong = getCurrentSong();
                 
         long position = 0;
         long duration = 0;
@@ -407,7 +535,9 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
             currentSong,
             position,
             System.currentTimeMillis(),
-            duration
+            duration,
+            repeatMode,
+            shuffleMode
         );
         
         // Update MediaSession PlaybackState
@@ -440,10 +570,11 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
             listener.onStateUpdated(currentState);
         }
         
-        // Handle Wakelock
-        if (state == PlaybackState.State.PLAYING) {
+        // Handle Wakelock - keep CPU awake during playback and buffering
+        if (currentState.isActivePlayback()) {
             if (wakeLock != null && !wakeLock.isHeld()) {
-                wakeLock.acquire(10 * 60 * 1000L);
+                // Use a longer timeout (1 hour) as a safety net, but we manage it manually
+                wakeLock.acquire(60 * 60 * 1000L);
             }
         } else {
             if (wakeLock != null && wakeLock.isHeld()) {
@@ -459,11 +590,12 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
         
         Notification notification = buildNotification(currentState);
         
-        if (currentState.isPlaying()) {
+        if (currentState.isActivePlayback()) {
             startForeground(NOTIFICATION_ID, notification);
         } else {
+            // Keep the notification but allow the service to be killed if inactive
             stopForeground(false);
-            NotificationManager nm = getSystemService(NotificationManager.class);
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             if (nm != null) nm.notify(NOTIFICATION_ID, notification);
         }
     }
@@ -583,17 +715,17 @@ public class MusicPlaybackService extends Service implements MediaPlayer.OnCompl
             art = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
         }
 
-        int playPauseIcon = state.isPlaying() ? R.drawable.ic_pause : R.drawable.ic_play;
-        String playPauseTitle = state.isPlaying() ? "Pause" : "Play";
+        int playPauseIcon = state.isActivePlayback() ? R.drawable.ic_pause : R.drawable.ic_play;
+        String playPauseTitle = state.isActivePlayback() ? "Pause" : "Play";
         PendingIntent playPauseAction;
-        if (state.isPlaying()) {
+        if (state.isActivePlayback()) {
             playPauseAction = MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PAUSE);
         } else {
             playPauseAction = MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY);
         }
         // Fallback to our custom receiver if MediaButton receiver isn't set up
         Intent ppIntent = new Intent(this, MediaNotificationReceiver.class);
-        ppIntent.setAction(state.isPlaying() ? MediaNotificationReceiver.ACTION_PAUSE : MediaNotificationReceiver.ACTION_PLAY);
+        ppIntent.setAction(state.isActivePlayback() ? MediaNotificationReceiver.ACTION_PAUSE : MediaNotificationReceiver.ACTION_PLAY);
         playPauseAction = PendingIntent.getBroadcast(this, 1, ppIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         
         Intent prevIntent = new Intent(this, MediaNotificationReceiver.class);

@@ -77,6 +77,8 @@ public class MainActivity extends BaseCompatActivity implements
     private AppCompatImageView btnPlay;
     private AppCompatImageView btnNext;
     private AppCompatImageView btnPrev;
+    private AppCompatImageView btnRepeat;
+    private AppCompatImageView btnShuffle;
 
     private static final int REQUEST_PATH = 121;
     private static final int REQUEST_CAMERA_MIC_STORAGE = 122;
@@ -206,6 +208,36 @@ public class MainActivity extends BaseCompatActivity implements
         btnPlay = binding.btnPlayback;
         btnNext = binding.btnPlayNext;
         btnPrev = binding.btnPlayPrev;
+        btnRepeat = binding.btnRepeat;
+        btnShuffle = binding.btnShuffle;
+
+        // Setup Interactive Circular Seeker
+        if (mCroller instanceof DotCircularProgressBar) {
+            DotCircularProgressBar dcb = (DotCircularProgressBar) mCroller;
+            dcb.setOnSeekListener(new DotCircularProgressBar.OnSeekListener() {
+                @Override
+                public void onSeek(int progress, boolean fromUser) {
+                    if (fromUser && lastState != null && lastState.getDuration() > 0) {
+                        long previewTime = (lastState.getDuration() * progress) / dcb.getMaxProgress();
+                        tvSongTitle.setText(utils.milliSecondsToTimer(previewTime));
+                    }
+                }
+
+                @Override
+                public void onStartTracking() {
+                    stopProgressUpdates();
+                }
+
+                @Override
+                public void onStopTracking(int finalProgress) {
+                    if (serviceBound && playbackService != null && lastState.getDuration() > 0) {
+                        long newPos = (lastState.getDuration() * finalProgress) / dcb.getMaxProgress();
+                        playbackService.seekTo(newPos);
+                    }
+                    startProgressUpdates();
+                }
+            });
+        }
     }
     
     private void setupClickListeners() {
@@ -214,6 +246,8 @@ public class MainActivity extends BaseCompatActivity implements
         if (btnNext != null) btnNext.setOnClickListener(v -> onClickNext());
         if (btnPrev != null) btnPrev.setOnClickListener(v -> onClickPrev());
         if (btnPlay != null) btnPlay.setOnClickListener(v -> onClickPlay());
+        if (btnRepeat != null) btnRepeat.setOnClickListener(v -> onClickRepeat());
+        if (btnShuffle != null) btnShuffle.setOnClickListener(v -> onClickShuffle());
         
         if (binding.bottomNavWrapper != null) {
             View btnFacebook = binding.bottomNavWrapper.findViewById(R.id.btn_facebook);
@@ -299,19 +333,55 @@ public class MainActivity extends BaseCompatActivity implements
 
     @Override
     public void onStateUpdated(PlaybackState state) {
+        // Detect state changes
+        boolean stateChanged = (state.getState() != lastState.getState());
+        boolean songChanged = (state.getSong() != null && (lastState.getSong() == null || 
+                               !state.getSong().getPath().equals(lastState.getSong().getPath())));
+        boolean shuffleChanged = (state.getShuffleMode() != lastState.getShuffleMode());
+        boolean repeatChanged = (state.getRepeatMode() != lastState.getRepeatMode());
+        
         this.lastState = state;
         
-        if (state.isPlaying()) {
-            startProgressUpdates();
-            startRotation();
-        } else {
-            stopProgressUpdates();
-            stopRotation();
+        // Static UI Updates (only update once per state Change or mode Change)
+        if (stateChanged || songChanged || shuffleChanged || repeatChanged) {
+            if (stateChanged || songChanged) {
+                if (state.isPlaying()) {
+                    startProgressUpdates();
+                    startRotation();
+                    changePlayBtn(PlayState.PLAY);
+                    circularVisualizer.setActive(true);
+                    if (mVisualizer != null) mVisualizer.setEnabled(true);
+                } else {
+                    stopProgressUpdates();
+                    stopRotation();
+                    changePlayBtn(PlayState.PAUSE);
+                    circularVisualizer.setActive(false);
+                    if (mVisualizer != null) mVisualizer.setEnabled(false);
+                    turnOffFlash();
+                }
+            }
+            
+            // Update Shuffle/Repeat buttons (triggered by state, song, or explicitly mode change)
+            if (btnShuffle != null) {
+                boolean isShuffle = state.getShuffleMode() == PlaybackState.ShuffleMode.ON;
+                btnShuffle.setAlpha(isShuffle ? 1.0f : 0.4f);
+            }
+            if (btnRepeat != null) {
+                if (state.getRepeatMode() == PlaybackState.RepeatMode.ONE) {
+                    btnRepeat.setImageResource(R.drawable.ic_repeat_one);
+                    btnRepeat.setAlpha(1.0f);
+                } else {
+                    btnRepeat.setImageResource(R.drawable.ic_repeat);
+                    btnRepeat.setAlpha(state.getRepeatMode() == PlaybackState.RepeatMode.ALL ? 1.0f : 0.4f);
+                }
+            }
         }
 
-        if (state.getSong() != null) {
+        // Song Metadata (only update if song changed)
+        if (songChanged && state.getSong() != null) {
             if (tvHeaderSongName != null) tvHeaderSongName.setText(state.getSong().getName());
             if (tvHeaderArtistName != null) tvHeaderArtistName.setText(state.getSong().getArtist());
+            if (tvBPM != null) tvBPM.setText(state.getSong().getBitrate() + " KBPS");
             
             if (ivAlbumArt != null) {
                 if (state.getSong().getAlbumArt() != null) {
@@ -323,24 +393,8 @@ public class MainActivity extends BaseCompatActivity implements
                 }
             }
         }
-        
-        if (state.isPlaying()) {
-            changePlayBtn(PlayState.PLAY);
-            circularVisualizer.setActive(true);
-            animRotate();
-            if (mVisualizer != null) mVisualizer.setEnabled(true);
-            
-            startProgressUpdates();
-        } else {
-            changePlayBtn(PlayState.PAUSE);
-            circularVisualizer.setActive(false);
-            resetanim();
-            if (mVisualizer != null) mVisualizer.setEnabled(false);
-            
-            stopProgressUpdates();
-            turnOffFlash();
-        }
-        
+
+        // Real-time UI Updates (Position/Visualizer)
         updateProgressUI(state.getCurrentPosition(System.currentTimeMillis()), state.getDuration());
         
         if (serviceBound && playbackService != null) {
@@ -465,6 +519,18 @@ public class MainActivity extends BaseCompatActivity implements
             playbackService.pause();
         } else {
             playbackService.play();
+        }
+    }
+
+    public void onClickRepeat() {
+        if (serviceBound && playbackService != null) {
+            playbackService.toggleRepeat();
+        }
+    }
+
+    public void onClickShuffle() {
+        if (serviceBound && playbackService != null) {
+            playbackService.toggleShuffle();
         }
     }
     
