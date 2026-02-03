@@ -16,7 +16,6 @@
         android:layout_height="0dp"
         android:layout_centerVertical="true" />
 
-    <!-- Top Header Info -->
     <RelativeLayout
         android:id="@+id/header_info"
         android:layout_width="match_parent"
@@ -196,24 +195,40 @@
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/btn_play_prev"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:padding="10dp"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:padding="8dp"
                 app:srcCompat="@drawable/ic_play_prev" />
 
             <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/btn_repeat"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_marginLeft="15dp"
+                android:padding="8dp"
+                app:srcCompat="@drawable/ic_repeat" />
+
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/btn_playback"
-                android:layout_width="70dp"
-                android:layout_height="70dp"
-                android:layout_marginLeft="30dp"
-                android:layout_marginRight="30dp"
+                android:layout_width="65dp"
+                android:layout_height="65dp"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
                 app:srcCompat="@drawable/ic_play_disable" />
 
             <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/btn_shuffle"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_marginRight="15dp"
+                android:padding="8dp"
+                app:srcCompat="@drawable/ic_shuffle" />
+
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/btn_play_next"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:padding="10dp"
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:padding="8dp"
                 app:srcCompat="@drawable/ic_play_next" />
 
         </LinearLayout>

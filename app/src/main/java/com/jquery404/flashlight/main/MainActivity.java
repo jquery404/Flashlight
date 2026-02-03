@@ -49,7 +49,6 @@ import pub.devrel.easypermissions.EasyPermissions;
 
 /**
  * Created by Faisal on 6/30/17.
- * Refactored for Service-based architecture.
  */
 
 public class MainActivity extends BaseCompatActivity implements
@@ -71,13 +70,15 @@ public class MainActivity extends BaseCompatActivity implements
     private View mCroller;
     private View circleViewWrapper;
     private View btnBrowser;
-    private View progressBar; // Ideally should be a SeekBar, but keeping original View type if generic, though refactoring to support seek
+    private View progressBar;
     private ProgressBarHandler progressBarHandler; 
     
     private AppCompatImageView btnFlash;
     private AppCompatImageView btnPlay;
     private AppCompatImageView btnNext;
     private AppCompatImageView btnPrev;
+    private AppCompatImageView btnRepeat;
+    private AppCompatImageView btnShuffle;
 
     private static final int REQUEST_PATH = 121;
     private static final int REQUEST_CAMERA_MIC_STORAGE = 122;
@@ -125,10 +126,7 @@ public class MainActivity extends BaseCompatActivity implements
             playbackService.setListener(MainActivity.this);
             serviceBound = true;
             
-            // Sync initial state
             onStateUpdated(playbackService.getState());
-            
-            // Init visualizer if playing
             initVisualizer();
         }
         
@@ -154,12 +152,10 @@ public class MainActivity extends BaseCompatActivity implements
             
             // Bind service
             Intent serviceIntent = new Intent(this, MusicPlaybackService.class);
-            startService(serviceIntent); // Ensure started
+            startService(serviceIntent);
             bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
             onAskPermission();
-            
-            // Handle intent
             handleNotificationAction(getIntent());
 
         } catch (Exception e) {
@@ -177,17 +173,13 @@ public class MainActivity extends BaseCompatActivity implements
         backgroundBeat = binding.backgroundBeat;
         soundPlate = binding.soundplate;
         mCroller = binding.croller;
-        
-        // Setup CircularSeekBar listener if applicable
         if (mCroller instanceof CircularSeekBar) {
             ((CircularSeekBar) mCroller).setSeekBarChangeListener(new CircularSeekBar.OnSeekChangeListener() {
                 @Override
                 public void onProgressChange(CircularSeekBar view, int newProgress) {
-                    // Logic for manual seeking if we want it later
                 }
             });
         } else if (mCroller instanceof DotCircularProgressBar) {
-            // New dot-based progress bar doesn't need touch listener for now as per design
             Log.d("MainActivity", "Using premium DotCircularProgressBar");
         }
         
@@ -195,7 +187,6 @@ public class MainActivity extends BaseCompatActivity implements
         tvHeaderArtistName = binding.tvHeaderArtistName;
         ivAlbumArt = binding.albumArt;
 
-        // Visualizer Toggle Listener on center circle
         if (binding.circleviewWrapper != null) {
             binding.circleviewWrapper.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -217,6 +208,36 @@ public class MainActivity extends BaseCompatActivity implements
         btnPlay = binding.btnPlayback;
         btnNext = binding.btnPlayNext;
         btnPrev = binding.btnPlayPrev;
+        btnRepeat = binding.btnRepeat;
+        btnShuffle = binding.btnShuffle;
+
+        // Setup Interactive Circular Seeker
+        if (mCroller instanceof DotCircularProgressBar) {
+            DotCircularProgressBar dcb = (DotCircularProgressBar) mCroller;
+            dcb.setOnSeekListener(new DotCircularProgressBar.OnSeekListener() {
+                @Override
+                public void onSeek(int progress, boolean fromUser) {
+                    if (fromUser && lastState != null && lastState.getDuration() > 0) {
+                        long previewTime = (lastState.getDuration() * progress) / dcb.getMaxProgress();
+                        tvSongTitle.setText(utils.milliSecondsToTimer(previewTime));
+                    }
+                }
+
+                @Override
+                public void onStartTracking() {
+                    stopProgressUpdates();
+                }
+
+                @Override
+                public void onStopTracking(int finalProgress) {
+                    if (serviceBound && playbackService != null && lastState.getDuration() > 0) {
+                        long newPos = (lastState.getDuration() * finalProgress) / dcb.getMaxProgress();
+                        playbackService.seekTo(newPos);
+                    }
+                    startProgressUpdates();
+                }
+            });
+        }
     }
     
     private void setupClickListeners() {
@@ -225,6 +246,8 @@ public class MainActivity extends BaseCompatActivity implements
         if (btnNext != null) btnNext.setOnClickListener(v -> onClickNext());
         if (btnPrev != null) btnPrev.setOnClickListener(v -> onClickPrev());
         if (btnPlay != null) btnPlay.setOnClickListener(v -> onClickPlay());
+        if (btnRepeat != null) btnRepeat.setOnClickListener(v -> onClickRepeat());
+        if (btnShuffle != null) btnShuffle.setOnClickListener(v -> onClickShuffle());
         
         if (binding.bottomNavWrapper != null) {
             View btnFacebook = binding.bottomNavWrapper.findViewById(R.id.btn_facebook);
@@ -237,18 +260,14 @@ public class MainActivity extends BaseCompatActivity implements
             if (btnFlash != null) btnFlash.setOnClickListener(v -> onClickFlashLight());
         }
         
-        // Seekbar logic (hacky if using generic View as progress bar, but assuming it's View for now as per original code)
-        // If progressBar is actually a SeekBar, let's cast it safely
         if (progressBar instanceof SeekBar) {
             ((SeekBar) progressBar).setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    // Update local time text if exists
                 }
 
                 @Override
                 public void onStartTrackingTouch(SeekBar seekBar) {
-                    // Stop updates
                     stopProgressUpdates();
                 }
 
@@ -274,9 +293,8 @@ public class MainActivity extends BaseCompatActivity implements
             beatDetector = new BeatDetector();
             progressBarHandler = new ProgressBarHandler();
             
-            useFlash = false; // Default to off on startup
+            useFlash = false;
             
-            // Sync flash button state from start
             if (flashLightManager != null && flashLightManager.hasFlash()) {
                 btnFlash.setImageResource(R.drawable.ic_flash_light_off);
             } else {
@@ -315,23 +333,56 @@ public class MainActivity extends BaseCompatActivity implements
 
     @Override
     public void onStateUpdated(PlaybackState state) {
+        // Detect state changes
+        boolean stateChanged = (state.getState() != lastState.getState());
+        boolean songChanged = (state.getSong() != null && (lastState.getSong() == null || 
+                               !state.getSong().getPath().equals(lastState.getSong().getPath())));
+        boolean shuffleChanged = (state.getShuffleMode() != lastState.getShuffleMode());
+        boolean repeatChanged = (state.getRepeatMode() != lastState.getRepeatMode());
+        
         this.lastState = state;
         
-        // Center circle text and progress updated in updateProgressUI via ProgressHandler
-        if (state.isPlaying()) {
-            startProgressUpdates();
-            startRotation();
-        } else {
-            stopProgressUpdates();
-            stopRotation();
+        // Static UI Updates (only update once per state Change or mode Change)
+        if (stateChanged || songChanged || shuffleChanged || repeatChanged) {
+            if (stateChanged || songChanged) {
+                if (state.isPlaying()) {
+                    startProgressUpdates();
+                    startRotation();
+                    changePlayBtn(PlayState.PLAY);
+                    circularVisualizer.setActive(true);
+                    if (mVisualizer != null) mVisualizer.setEnabled(true);
+                } else {
+                    stopProgressUpdates();
+                    stopRotation();
+                    changePlayBtn(PlayState.PAUSE);
+                    circularVisualizer.setActive(false);
+                    if (mVisualizer != null) mVisualizer.setEnabled(false);
+                    turnOffFlash();
+                }
+            }
+            
+            // Update Shuffle/Repeat buttons (triggered by state, song, or explicitly mode change)
+            if (btnShuffle != null) {
+                boolean isShuffle = state.getShuffleMode() == PlaybackState.ShuffleMode.ON;
+                btnShuffle.setAlpha(isShuffle ? 1.0f : 0.4f);
+            }
+            if (btnRepeat != null) {
+                if (state.getRepeatMode() == PlaybackState.RepeatMode.ONE) {
+                    btnRepeat.setImageResource(R.drawable.ic_repeat_one);
+                    btnRepeat.setAlpha(1.0f);
+                } else {
+                    btnRepeat.setImageResource(R.drawable.ic_repeat);
+                    btnRepeat.setAlpha(state.getRepeatMode() == PlaybackState.RepeatMode.ALL ? 1.0f : 0.4f);
+                }
+            }
         }
 
-        // Update Header Info
-        if (state.getSong() != null) {
+        // Song Metadata (only update if song changed)
+        if (songChanged && state.getSong() != null) {
             if (tvHeaderSongName != null) tvHeaderSongName.setText(state.getSong().getName());
             if (tvHeaderArtistName != null) tvHeaderArtistName.setText(state.getSong().getArtist());
+            if (tvBPM != null) tvBPM.setText(state.getSong().getBitrate() + " KBPS");
             
-            // Display album art in header
             if (ivAlbumArt != null) {
                 if (state.getSong().getAlbumArt() != null) {
                     android.graphics.Bitmap art = BitmapFactory.decodeByteArray(
@@ -342,43 +393,21 @@ public class MainActivity extends BaseCompatActivity implements
                 }
             }
         }
-        
-        // Update Play/Pause UI
-        if (state.isPlaying()) {
-            changePlayBtn(PlayState.PLAY);
-            circularVisualizer.setActive(true);
-            animRotate();
-            if (mVisualizer != null) mVisualizer.setEnabled(true);
-            
-            startProgressUpdates();
-        } else {
-            changePlayBtn(PlayState.PAUSE);
-            circularVisualizer.setActive(false);
-            resetanim();
-            // Don't disable visualizer immediately on pause to keep effect? Or disable to save battery.
-            // Original code disabled it.
-            if (mVisualizer != null) mVisualizer.setEnabled(false);
-            
-            stopProgressUpdates();
-            turnOffFlash();
-        }
-        
-        // One-shot progress update to sync position
+
+        // Real-time UI Updates (Position/Visualizer)
         updateProgressUI(state.getCurrentPosition(System.currentTimeMillis()), state.getDuration());
         
-        // Init/Re-init visualizer if needed (loaded or session ID changed)
         if (serviceBound && playbackService != null) {
             int currentSessionId = playbackService.getAudioSessionId();
             boolean sessionChanged = (currentSessionId != lastAudioSessionId);
             
             if ((mVisualizer == null || sessionChanged) && state.isPlaying()) {
-                 if (sessionChanged) {
-                     // Release old one if ID changed
-                     if (mVisualizer != null) {
-                         mVisualizer.release();
-                         mVisualizer = null;
-                     }
-                 }
+                if (sessionChanged) {
+                    if (mVisualizer != null) {
+                        mVisualizer.release();
+                        mVisualizer = null;
+                    }
+                }
                  initVisualizer();
                  lastAudioSessionId = currentSessionId;
             }
@@ -421,7 +450,7 @@ public class MainActivity extends BaseCompatActivity implements
                 long currentPos = state.getCurrentPosition(System.currentTimeMillis());
                 long duration = state.getDuration();
                 updateProgressUI(currentPos, duration);
-                mHandler.postDelayed(this, 1000); // Update every second
+                mHandler.postDelayed(this, 1000);
             } else {
                 isRunning = false;
             }
@@ -429,14 +458,8 @@ public class MainActivity extends BaseCompatActivity implements
     }
     
     private void updateProgressUI(long current, long duration) {
-        // Original code used a custom view or progress bar, let's adapt
-        // Assuming progressBar is a View that changes width or a ProgressBar
-        // Based on original code: "utils.getProgressPercentage"
-        
-        // If it's a standard ProgressBar/SeekBar
         if (progressBar instanceof android.widget.ProgressBar && duration > 0) {
-            int progress = (int) ((current * 100) / duration); // 0-100 range?
-            // If max is 1000
+            int progress = (int) ((current * 100) / duration);
             android.widget.ProgressBar pb = (android.widget.ProgressBar) progressBar;
             if (pb.getMax() > 100) {
                 progress = (int) ((current * pb.getMax()) / duration);
@@ -460,14 +483,10 @@ public class MainActivity extends BaseCompatActivity implements
             }
         }
         
-        // Update Center Circle Text
         if (lastState != null && lastState.getSong() != null) {
             tvSongTitle.setText(utils.milliSecondsToTimer(current));
             tvBPM.setText(lastState.getSong().getBitrate() + " KBPS");
         }
-        
-        // Also update text views if any (not shown in original linked code but common)
-        // Original had "notification_time_current" in notification, implies we might want it here too.
     }
 
     // ============================================================================================
@@ -492,7 +511,6 @@ public class MainActivity extends BaseCompatActivity implements
         PlaybackState state = playbackService.getState();
         if (state.getSong() == null) {
             Toast.makeText(this, "Please select a song first", Toast.LENGTH_SHORT).show();
-            // Possibly open browser
             onClickBrowser();
             return;
         }
@@ -501,6 +519,18 @@ public class MainActivity extends BaseCompatActivity implements
             playbackService.pause();
         } else {
             playbackService.play();
+        }
+    }
+
+    public void onClickRepeat() {
+        if (serviceBound && playbackService != null) {
+            playbackService.toggleRepeat();
+        }
+    }
+
+    public void onClickShuffle() {
+        if (serviceBound && playbackService != null) {
+            playbackService.toggleShuffle();
         }
     }
     
@@ -559,7 +589,7 @@ public class MainActivity extends BaseCompatActivity implements
 
     // ... (Keep existing visualizer callbacks, anim methods, flash methods)
 
-    // Simplified Browser Click
+    // Browser Click
     public void onClickBrowser() {
         String[] requiredPerms = getRequiredPermissions();
         if (!EasyPermissions.hasPermissions(this, requiredPerms)) {
@@ -585,15 +615,11 @@ public class MainActivity extends BaseCompatActivity implements
         songListDialog.show();
     }
     
-    // Async Task for reading songs (Legacy, keeping for now)
-    // Spotify-style instant loading
     private void loadPlaylist() {
         if (songManager == null) songManager = new SongManager(MainActivity.this);
         if (songsList == null) songsList = new ArrayList<>();
         
-        // Check if cache exists
         if (songManager.hasCache()) {
-            // Cache exists - load instantly (synchronous, fast)
             if (songsList.isEmpty()) {
                 ArrayList<Song> cachedSongs = songManager.getPlayList();
                 if (cachedSongs != null && !cachedSongs.isEmpty()) {
@@ -601,17 +627,14 @@ public class MainActivity extends BaseCompatActivity implements
                     Log.d("MainActivity", "Loaded " + songsList.size() + " songs from cache instantly");
                 }
             }
-            // Show list immediately
             showSongList();
         } else {
             // No cache - scan in background with progressive updates
             Log.d("MainActivity", "No cache found, starting progressive scan...");
             
-            // Show dialog immediately with empty list
             showSongList();
             
             new Thread(() -> {
-                // Pass callback to update UI as songs are found
                 songManager.getPlayList(true, new SongManager.SongScanCallback() {
                     @Override
                     public void onSongFound(Song song) {
@@ -641,8 +664,7 @@ public class MainActivity extends BaseCompatActivity implements
         }
     }
 
-    // ... (Keep existing onClickFacebook, onClickAbout, onClickFlashLight)
-    
+
     public void onClickFacebook() {
         Intent intent = new Intent();
         intent.setAction(Intent.ACTION_VIEW);
@@ -678,8 +700,7 @@ public class MainActivity extends BaseCompatActivity implements
         if (btnFlash != null) btnFlash.setImageResource(R.drawable.ic_flash_light_off);
     }
     
-    // ... Any other required animation/visualizer methods ...
-    
+
     public void animShakeBox() {
         Animation shakeAnimation = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.anim_shake);
         soundPlate.setLayerType(View.LAYER_TYPE_HARDWARE, null);
@@ -710,7 +731,6 @@ public class MainActivity extends BaseCompatActivity implements
 
     @Override
     public void onFftDataCapture(Visualizer visualizer, byte[] fft, int samplingRate) {
-        // Beats only
         if (beatDetector != null && beatDetector.detectBeat(fft)) {
             Log.d("MainActivity", "Beat detected! useFlash=" + useFlash + ", flashLightManager=" + (flashLightManager != null));
             animShakeBox();

@@ -36,7 +36,7 @@ public class SongManager {
     private static final String PREFS_NAME = "FlashlightPrefs";
     private static final String KEY_SONGS_CACHE = "songs_cache";
     private static final String KEY_LAST_SCAN = "last_scan_time";
-    private static final long CACHE_VALIDITY = 24 * 60 * 60 * 1000; // 24 hours
+    private static final long CACHE_VALIDITY = 24 * 60 * 60 * 1000;
     
     private ArrayList<Song> songsList = new ArrayList<>();
     private int currentSongPos = 0;
@@ -72,10 +72,9 @@ public class SongManager {
     }
     
     public ArrayList<Song> getPlayList(boolean forceRescan, SongScanCallback callback) {
-        // Try to load from cache first if not forcing rescan
         if (!forceRescan && context != null) {
             ArrayList<Song> cachedSongs = loadFromCache();
-            if (cachedSongs != null && !cachedSongs.isEmpty()) {
+        if (cachedSongs != null && !cachedSongs.isEmpty()) {
                 Log.d("SongManager", "Loaded " + cachedSongs.size() + " songs from cache");
                 songsList = cachedSongs;
                 if (callback != null) {
@@ -85,7 +84,6 @@ public class SongManager {
             }
         }
         
-        // If no cache or force rescan, scan file system
         Log.d("SongManager", "Scanning file system for songs...");
         songsList.clear();
         
@@ -122,7 +120,6 @@ public class SongManager {
             Log.e("SongManager", "Error getting playlist", e);
         }
         
-        // Save to cache after successful scan
         if (context != null && !songsList.isEmpty()) {
             saveToCache(songsList);
         }
@@ -303,7 +300,6 @@ public class SongManager {
         try {
             SharedPreferences prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             
-            // Check cache validity (optional - remove if you want cache to persist indefinitely)
             long lastScan = prefs.getLong(KEY_LAST_SCAN, 0);
             long cacheAge = System.currentTimeMillis() - lastScan;
             if (cacheAge > CACHE_VALIDITY) {
@@ -319,8 +315,6 @@ public class SongManager {
             
             for (int i = 0; i < jsonArray.length(); i++) {
                 JSONObject jsonSong = jsonArray.getJSONObject(i);
-                // Skip file existence check for instant load
-                // Files will be validated when user tries to play them
                 Song song = new Song(
                     jsonSong.getString("name"),
                     jsonSong.getString("path"),
